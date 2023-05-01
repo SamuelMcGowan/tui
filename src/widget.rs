@@ -9,25 +9,27 @@ pub enum Handled {
 }
 
 pub trait Widget<State, Msg> {
-    fn handle_event(&mut self, ctx: &mut Context<State, Msg>, event: Event) -> Handled;
-    fn handle_msg(&mut self, ctx: &mut Context<State, Msg>, msg: Msg) -> Handled;
+    fn handle_event(&mut self, ctx: Context<State, Msg>, event: Event) -> Handled;
+    fn handle_msg(&mut self, ctx: Context<State, Msg>, msg: Msg) -> Handled;
 
-    fn update(&mut self, ctx: &mut Context<State, Msg>);
+    fn update(&mut self, ctx: Context<State, Msg>);
     fn render(&mut self, buf: &mut Buffer);
 }
 
-pub struct Context<State, Msg> {
+pub struct ContextOwned<State, Msg> {
     pub state: State,
-    messages: VecDeque<Msg>,
-    should_quit: bool,
+    pub messages: VecDeque<Msg>,
+    pub should_quit: bool,
 }
 
-impl<State, Msg> Context<State, Msg> {
+pub struct Context<'a, State, Msg>(&'a mut ContextOwned<State, Msg>);
+
+impl<State, Msg> Context<'_, State, Msg> {
     pub fn write_msg(&mut self, message: Msg) {
-        self.messages.push_back(message);
+        self.0.messages.push_back(message);
     }
 
     pub fn quit(&mut self) {
-        self.should_quit = true;
+        self.0.should_quit = true;
     }
 }
