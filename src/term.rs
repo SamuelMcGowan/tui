@@ -10,7 +10,7 @@ pub trait Terminal: io::Write + Sized {
     fn size(&self) -> io::Result<TermSize>;
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
 pub struct TermSize {
     pub width: u16,
     pub height: u16,
@@ -26,7 +26,7 @@ impl TermSize {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
 pub struct TermPos {
     pub x: u16,
     pub y: u16,

@@ -18,6 +18,13 @@ impl Default for Cell {
     }
 }
 
+impl Cell {
+    pub fn new(c: char, style: Style) -> Self {
+        Self { c, style }
+    }
+}
+
+#[derive(Default, Debug, Clone)]
 pub struct Buffer {
     data: Box<[Option<Cell>]>,
 
@@ -26,11 +33,13 @@ pub struct Buffer {
 }
 
 impl Buffer {
-    pub fn new(size: TermSize) -> Self {
-        Self::new_inner(size, vec![])
+    pub fn new(size: impl Into<TermSize>) -> Self {
+        Self::new_inner(size.into(), vec![])
     }
 
-    pub fn resize_and_clear(&mut self, size: TermSize) {
+    pub fn resize_and_clear(&mut self, size: impl Into<TermSize>) {
+        let size = size.into();
+
         if size != self.size {
             let data = std::mem::take(&mut self.data).into_vec();
             *self = Self::new_inner(size, data);
@@ -112,5 +121,28 @@ impl<I: Into<TermPos>> Index<I> for Buffer {
 impl<I: Into<TermPos>> IndexMut<I> for Buffer {
     fn index_mut(&mut self, index: I) -> &mut Self::Output {
         self.get_mut(index).expect("out of bounds")
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{Buffer, Cell};
+    use crate::style::Style;
+
+    #[test]
+    fn set_cells() {
+        let mut buffer = Buffer::new([10, 10]);
+
+        buffer[[0, 0]] = Some(Cell::new('a', Style::default()));
+        buffer[[0, 9]] = Some(Cell::new('b', Style::default()));
+        buffer[[1, 0]] = Some(Cell::new('c', Style::default()));
+        buffer[[9, 9]] = Some(Cell::new('d', Style::default()));
+
+        assert!(matches!(buffer[[0, 0]], Some(cell) if cell.c == 'a'));
+        assert!(matches!(buffer[[0, 9]], Some(cell) if cell.c == 'b'));
+        assert!(matches!(buffer[[1, 0]], Some(cell) if cell.c == 'c'));
+        assert!(matches!(buffer[[9, 9]], Some(cell) if cell.c == 'd'));
+
+        assert!(buffer.get([10, 10]).is_none());
     }
 }
