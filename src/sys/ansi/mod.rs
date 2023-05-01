@@ -13,13 +13,11 @@ pub struct AnsiEvents {
     stdin: PollingStdin,
 }
 
-impl AnsiEvents {
-    pub(crate) fn new() -> Self {
-        Self::default()
-    }
-}
-
 impl Events for AnsiEvents {
+    fn new() -> io::Result<Self> {
+        Ok(Self::default())
+    }
+
     fn read_with_deadline(&mut self, deadline: Instant) -> io::Result<Option<Event>> {
         let Some(bytes) = self.stdin.read_with_deadline(deadline)? else {
             return Ok(None);

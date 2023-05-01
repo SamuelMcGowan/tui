@@ -4,6 +4,7 @@ use std::time::Instant;
 use bitflags::bitflags;
 
 pub trait Events: Sized {
+    fn new() -> io::Result<Self>;
     fn read_with_deadline(&mut self, deadline: Instant) -> io::Result<Option<Event>>;
 }
 

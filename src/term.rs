@@ -1,6 +1,7 @@
 use std::io;
 
 pub trait Terminal: io::Write + Sized {
+    fn new() -> io::Result<Self>;
     fn size(&self) -> io::Result<TermSize>;
 }
 
