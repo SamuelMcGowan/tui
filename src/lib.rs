@@ -3,4 +3,4 @@ pub mod event;
 pub mod style;
 pub mod term;
 
-mod sys;
+mod platform;
