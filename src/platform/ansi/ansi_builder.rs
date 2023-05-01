@@ -1,5 +1,6 @@
 use std::fmt::Write;
 
+use crate::buffer::Buffer;
 use crate::style::*;
 use crate::term::TermPos;
 
@@ -11,24 +12,47 @@ pub struct AnsiBuilder {
     cursor_visible: bool,
 }
 
-impl Default for AnsiBuilder {
-    fn default() -> Self {
+impl AnsiBuilder {
+    pub fn frame(f: impl Fn(&mut AnsiBuilder)) -> String {
         let mut ansi_builder = AnsiBuilder {
             s: String::new(),
             style: Style::default(),
 
-            // so that the following call works
+            // so that the following call to show the cursor works
             cursor_visible: true,
         };
 
+        ansi_builder.clear_screen();
         ansi_builder.set_cursor_position([0, 0]);
         ansi_builder.show_cursor(false);
 
-        ansi_builder
-    }
-}
+        f(&mut ansi_builder);
 
-impl AnsiBuilder {
+        ansi_builder.finish()
+    }
+
+    pub fn frame_of_buffer(buf: &Buffer) -> String {
+        Self::frame(|ansi_buffer| {
+            for y in 0..buf.size().height {
+                for x in 0..buf.size().width {
+                    let cell = buf[[x, y]].unwrap_or_default();
+
+                    ansi_buffer.write_style(cell.style);
+                    ansi_buffer.write_char(cell.c);
+                }
+
+                if buf.size().height == 0 || y < buf.size().height - 1 {
+                    ansi_buffer.write_newline();
+                }
+            }
+
+            if let Some(pos) = buf.cursor() {
+                ansi_buffer.set_cursor_position(pos);
+                ansi_buffer.show_cursor(true);
+            }
+        })
+    }
+
     pub fn write_str(&mut self, s: &str) {
         // remove the control characters without having to
         // push each character separately

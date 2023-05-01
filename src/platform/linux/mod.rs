@@ -26,39 +26,17 @@ impl crate::term::Terminal for Terminal {
     }
 
     fn draw(&mut self, buf: &Buffer) -> io::Result<()> {
-        self.draw_frame(|ansi_buffer| {
-            for y in 0..buf.size().height {
-                for x in 0..buf.size().width {
-                    let cell = buf[[x, y]].unwrap_or_default();
-
-                    ansi_buffer.write_style(cell.style);
-                    ansi_buffer.write_char(cell.c);
-                }
-
-                if buf.size().height == 0 || y < buf.size().height - 1 {
-                    ansi_buffer.write_newline();
-                }
-            }
-
-            if let Some(pos) = buf.cursor() {
-                ansi_buffer.set_cursor_position(pos);
-                ansi_buffer.show_cursor(true);
-            }
-        })
+        let ansi = AnsiBuilder::frame_of_buffer(buf);
+        write!(self.raw_stdout, "{ansi}")
     }
 }
 
-impl Terminal {
-    fn draw_frame(&mut self, f: impl Fn(&mut AnsiBuilder)) -> io::Result<()> {
-        let mut ansi_buffer = AnsiBuilder::default();
-        ansi_buffer.clear_screen();
-
-        f(&mut ansi_buffer);
-
-        let ansi = ansi_buffer.finish();
-
-        // Perform one write to stdout each frame.
-        // No buffering is performed, so no flushing is required.
-        write!(self.raw_stdout, "{ansi}")
+impl Drop for Terminal {
+    fn drop(&mut self) {
+        let ansi = AnsiBuilder::frame(|ansi_builder| {
+            ansi_builder.clear_screen();
+            ansi_builder.show_cursor(true);
+        });
+        let _ = write!(self.raw_stdout, "{ansi}");
     }
 }
