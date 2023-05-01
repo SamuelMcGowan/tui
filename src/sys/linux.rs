@@ -35,10 +35,7 @@ unsafe fn set_termios(fd: RawFd, termios: &Termios) -> io::Result<()> {
 unsafe fn get_size(fd: RawFd) -> io::Result<TermSize> {
     let mut size: WinSize = unsafe { mem::zeroed() };
     c_result!(unsafe { libc::ioctl(fd, libc::TIOCGWINSZ, &mut size) })?;
-    Ok(TermSize {
-        width: size.ws_col,
-        height: size.ws_row,
-    })
+    Ok(TermSize::new(size.ws_col, size.ws_row))
 }
 
 pub struct UnixTerm {
