@@ -38,12 +38,12 @@ unsafe fn get_size(fd: RawFd) -> io::Result<TermSize> {
     Ok(TermSize::new(size.ws_col, size.ws_row))
 }
 
-pub struct UnixTerm {
+pub struct LinuxTerminal {
     termios_prev: Termios,
 }
 
-impl Terminal for UnixTerm {
-    fn get_term() -> io::Result<Self> {
+impl LinuxTerminal {
+    pub(crate) fn new() -> io::Result<Self> {
         if RAW_TERM.swap(true, Ordering::Relaxed) {
             return Err(io::Error::new(
                 io::ErrorKind::AlreadyExists,
@@ -59,20 +59,22 @@ impl Terminal for UnixTerm {
 
         Ok(Self { termios_prev })
     }
+}
 
+impl Terminal for LinuxTerminal {
     fn size(&self) -> io::Result<TermSize> {
         unsafe { get_size(STDIN_FILENO) }
     }
 }
 
-impl Drop for UnixTerm {
+impl Drop for LinuxTerminal {
     fn drop(&mut self) {
         let _ = unsafe { set_termios(STDIN_FILENO, &self.termios_prev) };
         RAW_TERM.store(false, Ordering::Relaxed);
     }
 }
 
-impl io::Write for UnixTerm {
+impl io::Write for LinuxTerminal {
     fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
         unsafe { use_stdout(|stdout| stdout.write(buf)) }
     }
