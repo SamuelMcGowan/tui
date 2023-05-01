@@ -3,6 +3,8 @@ use std::collections::VecDeque;
 use crate::buffer::Buffer;
 use crate::event::Event;
 
+#[must_use]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Handled {
     Yes,
     No,
@@ -22,6 +24,20 @@ pub struct ContextOwned<State, Msg> {
     pub should_quit: bool,
 }
 
+impl<State, Msg> ContextOwned<State, Msg> {
+    pub fn new(state: State) -> Self {
+        Self {
+            state,
+            messages: VecDeque::new(),
+            should_quit: false,
+        }
+    }
+
+    pub fn borrow(&mut self) -> Context<State, Msg> {
+        Context(self)
+    }
+}
+
 pub struct Context<'a, State, Msg>(&'a mut ContextOwned<State, Msg>);
 
 impl<State, Msg> Context<'_, State, Msg> {
@@ -33,3 +49,5 @@ impl<State, Msg> Context<'_, State, Msg> {
         self.0.should_quit = true;
     }
 }
+
+pub type BoxedWidget<State, Msg> = Box<dyn Widget<State, Msg>>;
