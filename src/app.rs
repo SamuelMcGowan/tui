@@ -69,8 +69,6 @@ impl<State, Msg> App<State, Msg> {
         self.root_buf.resize_and_clear(term_size);
 
         self.root.render(&mut self.root_buf);
-        // TODO: render to buffer.
-
-        Ok(())
+        self.term.draw(&self.root_buf)
     }
 }

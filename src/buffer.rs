@@ -89,6 +89,14 @@ impl Buffer {
         Some(index)
     }
 
+    pub fn set_cursor(&mut self, cursor: Option<TermPos>) {
+        self.cursor = cursor;
+    }
+
+    pub fn cursor(&self) -> Option<TermPos> {
+        self.cursor
+    }
+
     pub fn blit(
         &mut self,
         offset: impl Into<TermPos>,

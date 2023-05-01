@@ -1,8 +1,12 @@
 use std::io;
 
+use crate::buffer::Buffer;
+
 pub trait Terminal: Sized {
     fn new() -> io::Result<Self>;
     fn size(&self) -> io::Result<TermSize>;
+
+    fn draw(&mut self, buf: &Buffer) -> io::Result<()>;
 }
 
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
