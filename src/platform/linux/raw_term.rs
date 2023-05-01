@@ -6,7 +6,7 @@ use std::{io, mem};
 
 use libc::{termios as Termios, winsize as WinSize, STDIN_FILENO, STDOUT_FILENO};
 
-use crate::term::{TermSize, Terminal};
+use crate::term::TermSize;
 
 static RAW_TERM: AtomicBool = AtomicBool::new(false);
 
@@ -38,12 +38,12 @@ unsafe fn get_size(fd: RawFd) -> io::Result<TermSize> {
     Ok(TermSize::new(size.ws_col, size.ws_row))
 }
 
-pub struct RawTerm {
+pub(crate) struct RawTerm {
     termios_prev: Termios,
 }
 
-impl Terminal for RawTerm {
-    fn new() -> io::Result<Self> {
+impl RawTerm {
+    pub fn new() -> io::Result<Self> {
         if RAW_TERM.swap(true, Ordering::Relaxed) {
             return Err(io::Error::new(
                 io::ErrorKind::AlreadyExists,
@@ -60,7 +60,7 @@ impl Terminal for RawTerm {
         Ok(Self { termios_prev })
     }
 
-    fn size(&self) -> io::Result<TermSize> {
+    pub fn size(&self) -> io::Result<TermSize> {
         unsafe { get_size(STDIN_FILENO) }
     }
 }
@@ -72,7 +72,9 @@ impl Drop for RawTerm {
     }
 }
 
-impl io::Write for RawTerm {
+pub struct RawStdout;
+
+impl io::Write for RawStdout {
     fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
         unsafe { use_stdout(|stdout| stdout.write(buf)) }
     }
