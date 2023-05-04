@@ -11,10 +11,19 @@ pub enum Handled {
 }
 
 pub trait Widget<State, Msg> {
-    fn handle_event(&mut self, ctx: Context<State, Msg>, event: Event) -> Handled;
-    fn handle_msg(&mut self, ctx: Context<State, Msg>, msg: Msg) -> Handled;
+    #[allow(unused_variables)]
+    fn handle_event(&mut self, ctx: Context<State, Msg>, event: Event) -> Handled {
+        Handled::No
+    }
 
-    fn update(&mut self, ctx: Context<State, Msg>);
+    #[allow(unused_variables)]
+    fn handle_msg(&mut self, ctx: Context<State, Msg>, msg: Msg) -> Handled {
+        Handled::No
+    }
+
+    #[allow(unused_variables)]
+    fn update(&mut self, ctx: Context<State, Msg>) {}
+
     fn render(&mut self, buf: &mut Buffer);
 }
 
@@ -51,3 +60,23 @@ impl<State, Msg> Context<'_, State, Msg> {
 }
 
 pub type BoxedWidget<State, Msg> = Box<dyn Widget<State, Msg>>;
+
+pub trait Callback<State, Msg, WidgetState> {
+    fn callback(&mut self, ctx: &mut Context<State, Msg>, widget: &mut WidgetState);
+}
+
+impl<F: FnMut(&mut Context<State, Msg>, &mut WidgetState), State, Msg, WidgetState>
+    Callback<State, Msg, WidgetState> for F
+{
+    fn callback(&mut self, ctx: &mut Context<State, Msg>, widget: &mut WidgetState) {
+        self(ctx, widget)
+    }
+}
+
+pub struct EmptyCallback;
+
+impl<State, Msg, WidgetState> Callback<State, Msg, WidgetState> for EmptyCallback {
+    fn callback(&mut self, _ctx: &mut Context<State, Msg>, _widget: &mut WidgetState) {}
+}
+
+pub type BoxedCallback<State, Msg, WidgetState> = Box<dyn Callback<State, Msg, WidgetState>>;

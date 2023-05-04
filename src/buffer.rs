@@ -89,8 +89,8 @@ impl Buffer {
         Some(index)
     }
 
-    pub fn set_cursor(&mut self, cursor: Option<TermPos>) {
-        self.cursor = cursor;
+    pub fn set_cursor(&mut self, cursor: Option<impl Into<TermPos>>) {
+        self.cursor = cursor.map(Into::into);
     }
 
     pub fn cursor(&self) -> Option<TermPos> {

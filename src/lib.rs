@@ -6,3 +6,4 @@ pub mod widget;
 
 pub mod app;
 mod platform;
+pub mod widgets;
