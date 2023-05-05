@@ -3,7 +3,6 @@ use std::time::{Duration, Instant};
 
 use crate::buffer::Buffer;
 use crate::event::Events as _;
-use crate::platform::ansi::AnsiEvents as Events;
 use crate::term2::linux::LinuxTerminal;
 use crate::term2::{Terminal, TerminalWriter};
 use crate::widget::{BoxedWidget, ContextOwned, Widget};
@@ -15,7 +14,6 @@ pub struct App<State, Msg> {
     root_buf: Buffer,
 
     term: LinuxTerminal,
-    events: Events,
 
     refresh_rate: Duration,
 }
@@ -36,7 +34,6 @@ impl<State, Msg> App<State, Msg> {
             root_buf: Buffer::new(term_size),
 
             term,
-            events: Events::new()?,
 
             refresh_rate,
         })
@@ -51,7 +48,8 @@ impl<State, Msg> App<State, Msg> {
 
             self.root.update(&mut self.context.borrow());
 
-            while let Some(event) = self.events.read_with_deadline(deadline)? {
+            let events = self.term.events();
+            while let Some(event) = events.read_with_deadline(deadline)? {
                 let _ = self.root.handle_event(&mut self.context.borrow(), &event);
             }
 

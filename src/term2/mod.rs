@@ -1,4 +1,7 @@
 mod ansi;
+mod ansi_event;
+mod input;
+
 pub mod linux;
 
 use std::io;
@@ -7,11 +10,13 @@ use crate::style::{Color, Weight};
 
 pub trait Terminal: Sized {
     type Writer: TerminalWriter;
+    type Events: crate::event::Events;
 
     fn init() -> io::Result<Self>;
     fn size(&self) -> io::Result<TermSize>;
 
     fn writer(&mut self) -> &mut Self::Writer;
+    fn events(&mut self) -> &mut Self::Events;
 }
 
 pub trait TerminalWriter {
