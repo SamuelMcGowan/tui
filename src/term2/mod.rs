@@ -7,8 +7,15 @@ use crate::style::{Color, Weight};
 use crate::term::{TermPos, TermSize};
 
 pub trait Terminal: Sized {
+    type Writer: TerminalWriter;
+
     fn init() -> io::Result<Self>;
-    fn get_size(&mut self) -> io::Result<TermSize>;
+    fn size(&self) -> io::Result<TermSize>;
+
+    fn writer(&mut self) -> &mut Self::Writer;
+}
+
+pub trait TerminalWriter {
     fn flush(&mut self) -> io::Result<()>;
 
     fn clear_all(&mut self);

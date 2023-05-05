@@ -2,7 +2,7 @@ use std::ops::{Index, IndexMut};
 
 use crate::style::Style;
 use crate::term::{TermPos, TermSize};
-use crate::term2::Terminal;
+use crate::term2::TerminalWriter;
 
 #[derive(Debug, Clone, Copy)]
 pub struct Cell {
@@ -118,7 +118,7 @@ impl Buffer {
         }
     }
 
-    pub fn draw_to_terminal<T: Terminal>(&self, term: &mut T) {
+    pub fn draw_to_terminal<W: TerminalWriter>(&self, term: &mut W) {
         term.clear_all();
         term.set_cursor_vis(false);
 
