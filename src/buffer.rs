@@ -2,6 +2,7 @@ use std::ops::{Index, IndexMut};
 
 use crate::style::Style;
 use crate::term::{TermPos, TermSize};
+use crate::term2::Terminal;
 
 #[derive(Debug, Clone, Copy)]
 pub struct Cell {
@@ -114,6 +115,35 @@ impl Buffer {
 
         if override_cursor {
             self.cursor = buf.cursor.map(|pos| pos.offset(offset));
+        }
+    }
+
+    pub fn draw_to_terminal<T: Terminal>(&self, term: &mut T) {
+        term.clear_all();
+        term.set_cursor_vis(false);
+
+        for y in 0..self.size.height {
+            for x in 0..self.size.width {
+                term.set_cursor_pos([x, y]);
+                let cell = self[[x, y]].unwrap_or_default();
+
+                term.set_fg_color(cell.style.fg);
+                term.set_bg_color(cell.style.bg);
+                term.set_weight(cell.style.weight);
+                term.set_underline(cell.style.underline);
+
+                term.write_char(cell.c);
+            }
+        }
+
+        match self.cursor {
+            Some(pos) => {
+                term.set_cursor_pos(pos);
+                term.set_cursor_vis(true);
+            }
+            None => {
+                term.set_cursor_vis(false);
+            }
         }
     }
 }

@@ -3,8 +3,9 @@ use std::time::{Duration, Instant};
 
 use crate::buffer::Buffer;
 use crate::event::Events as _;
-use crate::platform::{Events, Terminal};
-use crate::term::Terminal as _;
+use crate::platform::Events;
+use crate::term2::linux::LinuxTerminal;
+use crate::term2::Terminal;
 use crate::widget::{BoxedWidget, ContextOwned, Widget};
 
 pub struct App<State, Msg> {
@@ -13,7 +14,7 @@ pub struct App<State, Msg> {
     root: BoxedWidget<State, Msg>,
     root_buf: Buffer,
 
-    term: Terminal,
+    term: LinuxTerminal,
     events: Events,
 
     refresh_rate: Duration,
@@ -25,8 +26,8 @@ impl<State, Msg> App<State, Msg> {
         root: impl Widget<State, Msg> + 'static,
         refresh_rate: Duration,
     ) -> io::Result<Self> {
-        let term = Terminal::new()?;
-        let term_size = term.size()?;
+        let mut term = LinuxTerminal::init()?;
+        let term_size = term.get_size()?;
 
         Ok(Self {
             context: ContextOwned::new(state),
@@ -65,10 +66,13 @@ impl<State, Msg> App<State, Msg> {
     }
 
     fn render(&mut self) -> io::Result<()> {
-        let term_size = self.term.size()?;
+        let term_size = self.term.get_size()?;
         self.root_buf.resize_and_clear(term_size);
 
         self.root.render(&mut self.root_buf);
-        self.term.draw(&self.root_buf)
+
+        self.root_buf.draw_to_terminal(&mut self.term);
+
+        self.term.flush()
     }
 }
