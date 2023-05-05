@@ -17,7 +17,7 @@ pub trait Widget<State, Msg> {
     }
 
     #[allow(unused_variables)]
-    fn handle_msg(&mut self, ctx: &mut Context<State, Msg>, msg: Msg) -> Handled {
+    fn handle_msg(&mut self, ctx: &mut Context<State, Msg>, msg: &Msg) -> Handled {
         Handled::No
     }
 

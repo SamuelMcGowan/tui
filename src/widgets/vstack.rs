@@ -24,7 +24,7 @@ impl<State, Msg> Widget<State, Msg> for VStack<State, Msg> {
         }
     }
 
-    fn handle_msg(&mut self, ctx: &mut Context<State, Msg>, msg: Msg) -> Handled {
+    fn handle_msg(&mut self, ctx: &mut Context<State, Msg>, msg: &Msg) -> Handled {
         match self.focused {
             Some(focused) => self.elements[focused].widget.handle_msg(ctx, msg),
             None => Handled::No,
