@@ -1,6 +1,7 @@
 use super::string_editor::TextEdit;
 use super::StringEditor;
 use crate::buffer::{Buffer, Cell};
+use crate::callback::*;
 use crate::event::*;
 use crate::style::Style;
 use crate::widget::*;
@@ -20,7 +21,7 @@ impl<State, Msg> Default for TextInput<State, Msg> {
     fn default() -> Self {
         Self {
             state: TextInputState::default(),
-            on_enter: Box::new(EmptyCallback),
+            on_enter: DummyCallback.boxed(),
         }
     }
 }
@@ -56,7 +57,7 @@ impl<State, Msg> Widget<State, Msg> for TextInput<State, Msg> {
                 key_code: KeyCode::Return,
                 modifiers,
             }) if modifiers.is_empty() => {
-                self.on_enter.callback(ctx, &mut self.state);
+                self.on_enter.call(ctx, &mut self.state);
                 Handled::Yes
             }
 

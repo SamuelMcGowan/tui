@@ -4,9 +4,10 @@ use crate::buffer::Buffer;
 use crate::event::Event;
 
 #[must_use]
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Handled {
     Yes,
+    #[default]
     No,
 }
 
@@ -26,6 +27,8 @@ pub trait Widget<State, Msg> {
 
     fn render(&mut self, buf: &mut Buffer);
 }
+
+pub type BoxedWidget<State, Msg> = Box<dyn Widget<State, Msg>>;
 
 pub struct ContextOwned<State, Msg> {
     pub state: State,
@@ -58,25 +61,3 @@ impl<State, Msg> Context<'_, State, Msg> {
         self.0.should_quit = true;
     }
 }
-
-pub type BoxedWidget<State, Msg> = Box<dyn Widget<State, Msg>>;
-
-pub trait Callback<State, Msg, WidgetState> {
-    fn callback(&mut self, ctx: &mut Context<State, Msg>, widget: &mut WidgetState);
-}
-
-impl<F: FnMut(&mut Context<State, Msg>, &mut WidgetState), State, Msg, WidgetState>
-    Callback<State, Msg, WidgetState> for F
-{
-    fn callback(&mut self, ctx: &mut Context<State, Msg>, widget: &mut WidgetState) {
-        self(ctx, widget)
-    }
-}
-
-pub struct EmptyCallback;
-
-impl<State, Msg, WidgetState> Callback<State, Msg, WidgetState> for EmptyCallback {
-    fn callback(&mut self, _ctx: &mut Context<State, Msg>, _widget: &mut WidgetState) {}
-}
-
-pub type BoxedCallback<State, Msg, WidgetState> = Box<dyn Callback<State, Msg, WidgetState>>;

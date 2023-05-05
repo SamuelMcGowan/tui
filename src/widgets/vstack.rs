@@ -39,7 +39,7 @@ impl<State, Msg> Widget<State, Msg> for VStack<State, Msg> {
 
     fn render(&mut self, buf: &mut Buffer) {
         let size = buf.size();
-        self.calculate_sizes(size.height);
+        self.allocate_space(size.height);
 
         let mut offset_y = 0;
         for (i, element) in self.elements.iter_mut().enumerate() {
@@ -84,66 +84,83 @@ impl<State, Msg> VStack<State, Msg> {
         };
     }
 
-    fn calculate_sizes(&mut self, available: u16) -> LayoutResult {
-        // In case of divide-by-zero.
-        if self.elements.is_empty() {
-            if available == 0 {
-                return LayoutResult::Normal;
-            } else {
-                return LayoutResult::SpaceRemaining(available);
-            }
-        }
+    pub fn focus_up(&mut self) {
+        self.focused = self.focused.map(|focus| focus.saturating_sub(1));
+    }
 
-        // Allocate each element its minimum requested space.
-        let mut min_total = 0;
+    pub fn focus_down(&mut self) {
+        // `focused` will only be `Some` when there is at least one element, so the
+        // subtraction can't underflow.
+        self.focused = self
+            .focused
+            .map(|focus| (focus + 1).min(self.elements.len() - 1));
+    }
+
+    fn allocate_space(&mut self, available: u16) {
+        let min_required = self.allocate_min();
+        if min_required < available {
+            let available = self.allocate_max(available, min_required);
+            self.allocate_remainder(available);
+        }
+    }
+
+    fn allocate_min(&mut self) -> u16 {
+        let mut total = 0;
         for element in &mut self.elements {
-            let min = element.constraint.min.unwrap_or_default();
+            let min = element.constraint.min.unwrap_or(1);
 
             element.size = min;
-            min_total += min;
+            total += min;
+        }
+        total
+    }
+
+    fn allocate_max(&mut self, available: u16, min_required: u16) -> u16 {
+        let remainder = available - min_required;
+        let share = remainder / self.elements.len() as u16;
+
+        let mut total = 0;
+        for element in &mut self.elements {
+            let min = element.constraint.min.unwrap_or(1);
+
+            let incr = match element.constraint.max {
+                Some(max) => max.saturating_sub(min).min(share),
+                None => share,
+            };
+
+            element.size += incr;
+            total += incr;
         }
 
-        // Allocate remaining space.
-        if min_total < available {
-            let mut remaining = available - min_total;
+        remainder.saturating_sub(total)
+    }
 
-            // Give every element its fair share of the remaining space.
-            let share = remaining / self.elements.len() as u16;
-            let mut num_still_wanting = 0;
+    fn allocate_remainder(&mut self, remainder: u16) {
+        let num_without_max = self
+            .elements
+            .iter()
+            .filter(|elem| elem.constraint.max.is_none())
+            .count();
 
-            for element in &mut self.elements {
-                let share = match element.constraint.max {
-                    Some(max) => share.max(max),
-                    None => {
-                        num_still_wanting += 1;
-                        share
-                    }
-                };
+        // Watch for division-by-zero.
+        if num_without_max == 0 {
+            return;
+        }
+
+        let share = remainder / num_without_max as u16;
+        let mut rem = remainder as usize % num_without_max;
+
+        for element in &mut self.elements {
+            if element.constraint.max.is_none() {
                 element.size += share;
 
-                // Since `remaining` includes the remainder of the division anyway we subtract
-                // from it instead of having to do modulus and then adding to that.
-                remaining -= share;
-            }
-
-            // Distribute the remainder.
-            let share = remaining / num_still_wanting;
-            remaining %= num_still_wanting;
-
-            for element in &mut self.elements {
-                if element.constraint.max.is_some() {
-                    element.size += share;
+                // This uses up the final remaining space such that the entire space is used if
+                // possible.
+                if rem > 0 {
+                    element.size += 1;
+                    rem -= 1;
                 }
             }
-
-            // Done.
-            if remaining > 0 {
-                LayoutResult::SpaceRemaining(remaining)
-            } else {
-                LayoutResult::Normal
-            }
-        } else {
-            LayoutResult::Overflowed(min_total - available)
         }
     }
 }
