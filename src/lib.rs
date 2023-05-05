@@ -6,4 +6,4 @@ pub mod style;
 pub mod widget;
 pub mod widgets;
 
-pub mod term2;
+pub mod platform;

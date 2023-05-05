@@ -3,8 +3,8 @@ use std::time::{Duration, Instant};
 
 use crate::buffer::Buffer;
 use crate::event::Events as _;
-use crate::term2::linux::LinuxTerminal;
-use crate::term2::{Terminal, TerminalWriter};
+use crate::platform::linux::LinuxTerminal;
+use crate::platform::{Terminal, TerminalWriter};
 use crate::widget::{BoxedWidget, ContextOwned, Widget};
 
 pub struct App<State, Msg> {

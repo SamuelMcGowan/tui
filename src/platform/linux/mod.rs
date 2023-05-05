@@ -2,27 +2,25 @@ mod raw_term;
 
 use std::io::{self};
 
-use raw_term::{RawStdout, RawTerm};
+use raw_term::RawTerm;
 
 use super::ansi::AnsiWriter;
 use super::ansi_event::AnsiEvents;
 use super::{Terminal, TerminalWriter};
-use crate::term2::TermSize;
+use crate::platform::TermSize;
 
 pub struct LinuxTerminal {
-    raw_term: RawTerm,
-    writer: AnsiWriter<RawStdout>,
+    raw_term: AnsiWriter<RawTerm>,
     events: AnsiEvents,
 }
 
 impl Terminal for LinuxTerminal {
-    type Writer = AnsiWriter<RawStdout>;
+    type Writer = AnsiWriter<RawTerm>;
     type Events = AnsiEvents;
 
     fn init() -> io::Result<Self> {
         let mut term = Self {
-            raw_term: RawTerm::new()?,
-            writer: AnsiWriter::new(RawStdout),
+            raw_term: AnsiWriter::new(RawTerm::new()?),
             events: AnsiEvents::default(),
         };
 
@@ -33,11 +31,11 @@ impl Terminal for LinuxTerminal {
     }
 
     fn size(&self) -> io::Result<TermSize> {
-        self.raw_term.get_size()
+        self.raw_term.inner().get_size()
     }
 
     fn writer(&mut self) -> &mut Self::Writer {
-        &mut self.writer
+        &mut self.raw_term
     }
 
     fn events(&mut self) -> &mut Self::Events {

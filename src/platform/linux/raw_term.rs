@@ -6,7 +6,7 @@ use std::{io, mem};
 
 use libc::{termios as Termios, winsize as WinSize, STDIN_FILENO, STDOUT_FILENO};
 
-use crate::term2::TermSize;
+use crate::platform::TermSize;
 
 static RAW_TERM: AtomicBool = AtomicBool::new(false);
 
@@ -38,7 +38,7 @@ unsafe fn get_size(fd: RawFd) -> io::Result<TermSize> {
     Ok(TermSize::new(size.ws_col, size.ws_row))
 }
 
-pub(crate) struct RawTerm {
+pub struct RawTerm {
     termios_prev: Termios,
 }
 
@@ -72,9 +72,7 @@ impl Drop for RawTerm {
     }
 }
 
-pub struct RawStdout;
-
-impl io::Write for RawStdout {
+impl io::Write for RawTerm {
     fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
         unsafe { use_stdout(|stdout| stdout.write(buf)) }
     }

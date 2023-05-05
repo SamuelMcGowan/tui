@@ -19,6 +19,10 @@ impl<W: Write> AnsiWriter<W> {
         }
     }
 
+    pub fn inner(&self) -> &W {
+        &self.writer
+    }
+
     pub fn write(&mut self, mut w: impl io::Write) -> io::Result<()> {
         w.write_all(self.buf.as_bytes())?;
         self.buf.clear();

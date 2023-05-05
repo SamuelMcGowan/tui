@@ -1,7 +1,7 @@
 use std::ops::{Index, IndexMut};
 
+use crate::platform::{TermPos, TermSize, TerminalWriter};
 use crate::style::Style;
-use crate::term2::{TermPos, TermSize, TerminalWriter};
 
 #[derive(Debug, Clone, Copy)]
 pub struct Cell {
