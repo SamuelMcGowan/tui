@@ -48,10 +48,10 @@ impl<State, Msg> App<State, Msg> {
                 .checked_add(self.refresh_rate)
                 .expect("deadline overflowed");
 
-            self.root.update(self.context.borrow());
+            self.root.update(&mut self.context.borrow());
 
             while let Some(event) = self.events.read_with_deadline(deadline)? {
-                let _ = self.root.handle_event(self.context.borrow(), event);
+                let _ = self.root.handle_event(&mut self.context.borrow(), event);
             }
 
             if self.context.should_quit {
