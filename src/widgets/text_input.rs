@@ -50,7 +50,7 @@ impl<State, Msg> TextInput<State, Msg> {
 }
 
 impl<State, Msg> Widget<State, Msg> for TextInput<State, Msg> {
-    fn handle_event(&mut self, ctx: &mut Context<State, Msg>, event: Event) -> Handled {
+    fn handle_event(&mut self, ctx: &mut Context<State, Msg>, event: &Event) -> Handled {
         match event {
             Event::Key(KeyEvent {
                 key_code: KeyCode::Return,

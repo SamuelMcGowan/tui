@@ -145,13 +145,13 @@ impl TextEdit for StringEditor {
 }
 
 pub trait TextEdit {
-    fn handle_event(&mut self, event: Event) -> Handled {
+    fn handle_event(&mut self, event: &Event) -> Handled {
         match event {
             Event::Key(KeyEvent {
                 key_code,
                 modifiers,
             }) if modifiers.is_empty() => match key_code {
-                KeyCode::Char(c) => self.insert_char(c),
+                KeyCode::Char(c) => self.insert_char(*c),
 
                 KeyCode::Delete => self.delete_char(),
                 KeyCode::Backspace => self.backspace(),

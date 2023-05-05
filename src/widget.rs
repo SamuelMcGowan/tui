@@ -12,7 +12,7 @@ pub enum Handled {
 
 pub trait Widget<State, Msg> {
     #[allow(unused_variables)]
-    fn handle_event(&mut self, ctx: &mut Context<State, Msg>, event: Event) -> Handled {
+    fn handle_event(&mut self, ctx: &mut Context<State, Msg>, event: &Event) -> Handled {
         Handled::No
     }
 
