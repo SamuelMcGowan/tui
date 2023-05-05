@@ -1,3 +1,4 @@
+use super::StringEditor;
 use crate::buffer::{Buffer, Cell};
 use crate::event::*;
 use crate::style::Style;
@@ -5,23 +6,13 @@ use crate::widget::*;
 
 #[derive(Default)]
 pub struct TextInputState {
-    pub text: String,
+    pub text: StringEditor,
     pub style: Style,
 }
 
 pub struct TextInput<State, Msg> {
     state: TextInputState,
     on_enter: BoxedCallback<State, Msg, TextInputState>,
-}
-
-impl TextInputState {
-    pub fn text(&self) -> &str {
-        &self.text
-    }
-
-    pub fn set_text(&mut self, text: impl Into<String>) {
-        self.text = text.into();
-    }
 }
 
 impl<State, Msg> Default for TextInput<State, Msg> {
@@ -39,7 +30,7 @@ impl<State, Msg> TextInput<State, Msg> {
     }
 
     pub fn with_text(mut self, text: impl Into<String>) -> Self {
-        self.state.text = text.into();
+        self.state.text.set_string(text);
         self
     }
 
@@ -65,7 +56,7 @@ impl<State, Msg> Widget<State, Msg> for TextInput<State, Msg> {
                 modifiers,
             }) if modifiers.is_empty() => match key_code {
                 KeyCode::Char(c) => {
-                    self.state.text.push(c);
+                    self.state.text.insert_char(c);
                     Handled::Yes
                 }
 
@@ -74,8 +65,29 @@ impl<State, Msg> Widget<State, Msg> for TextInput<State, Msg> {
                     Handled::Yes
                 }
 
+                KeyCode::Delete => {
+                    self.state.text.delete_char();
+                    Handled::Yes
+                }
                 KeyCode::Backspace => {
-                    self.state.text.pop();
+                    self.state.text.backspace();
+                    Handled::Yes
+                }
+
+                KeyCode::Left => {
+                    self.state.text.move_backwards();
+                    Handled::Yes
+                }
+                KeyCode::Right => {
+                    self.state.text.move_forwards();
+                    Handled::Yes
+                }
+                KeyCode::Home => {
+                    self.state.text.move_home();
+                    Handled::Yes
+                }
+                KeyCode::End => {
+                    self.state.text.move_end();
                     Handled::Yes
                 }
 
@@ -95,6 +107,7 @@ impl<State, Msg> Widget<State, Msg> for TextInput<State, Msg> {
         for (x, c) in self
             .state
             .text
+            .as_str()
             .chars()
             .enumerate()
             .take(size.width as usize - 1)
@@ -102,8 +115,7 @@ impl<State, Msg> Widget<State, Msg> for TextInput<State, Msg> {
             buf[[x as u16, 0]] = Some(Cell::new(c, self.state.style));
         }
 
-        // TODO: don't recount the characters.
-        let cursor_x = self.state.text.chars().count();
+        let cursor_x = self.state.text.cursor_pos_chars();
         if cursor_x < size.width as usize {
             buf.set_cursor(Some([cursor_x as u16, 0]));
         }
