@@ -1,3 +1,4 @@
+use super::string_editor::TextEdit;
 use super::StringEditor;
 use crate::buffer::{Buffer, Cell};
 use crate::event::*;
@@ -52,48 +53,14 @@ impl<State, Msg> Widget<State, Msg> for TextInput<State, Msg> {
     fn handle_event(&mut self, mut ctx: Context<State, Msg>, event: Event) -> Handled {
         match event {
             Event::Key(KeyEvent {
-                key_code,
+                key_code: KeyCode::Return,
                 modifiers,
-            }) if modifiers.is_empty() => match key_code {
-                KeyCode::Char(c) => {
-                    self.state.text.insert_char(c);
-                    Handled::Yes
-                }
+            }) if modifiers.is_empty() => {
+                self.on_enter.callback(&mut ctx, &mut self.state);
+                Handled::Yes
+            }
 
-                KeyCode::Return => {
-                    self.on_enter.callback(&mut ctx, &mut self.state);
-                    Handled::Yes
-                }
-
-                KeyCode::Delete => {
-                    self.state.text.delete_char();
-                    Handled::Yes
-                }
-                KeyCode::Backspace => {
-                    self.state.text.backspace();
-                    Handled::Yes
-                }
-
-                KeyCode::Left => {
-                    self.state.text.move_backwards();
-                    Handled::Yes
-                }
-                KeyCode::Right => {
-                    self.state.text.move_forwards();
-                    Handled::Yes
-                }
-                KeyCode::Home => {
-                    self.state.text.move_home();
-                    Handled::Yes
-                }
-                KeyCode::End => {
-                    self.state.text.move_end();
-                    Handled::Yes
-                }
-
-                _ => Handled::No,
-            },
-            _ => Handled::No,
+            event => self.state.text.handle_event(event),
         }
     }
 
