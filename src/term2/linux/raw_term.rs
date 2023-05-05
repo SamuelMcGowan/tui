@@ -6,7 +6,7 @@ use std::{io, mem};
 
 use libc::{termios as Termios, winsize as WinSize, STDIN_FILENO, STDOUT_FILENO};
 
-use crate::term::TermSize;
+use crate::term2::TermSize;
 
 static RAW_TERM: AtomicBool = AtomicBool::new(false);
 

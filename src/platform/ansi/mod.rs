@@ -5,11 +5,8 @@ use self::input::PollingStdin;
 use self::parse_event::{parse_event, Events};
 use crate::event::Event;
 
-mod ansi_builder;
 mod input;
 mod parse_event;
-
-pub use ansi_builder::AnsiBuilder;
 
 #[derive(Default)]
 pub struct AnsiEvents {

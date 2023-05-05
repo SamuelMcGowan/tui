@@ -1,9 +1,8 @@
 use std::fmt::Write as _;
 use std::io::{self, Write};
 
-use super::TerminalWriter;
+use super::{TermPos, TerminalWriter};
 use crate::style::{Color, Weight};
-use crate::term::TermPos;
 
 const CSI: &str = "\x1b[";
 

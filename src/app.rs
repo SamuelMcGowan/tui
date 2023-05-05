@@ -3,7 +3,7 @@ use std::time::{Duration, Instant};
 
 use crate::buffer::Buffer;
 use crate::event::Events as _;
-use crate::platform::Events;
+use crate::platform::ansi::AnsiEvents as Events;
 use crate::term2::linux::LinuxTerminal;
 use crate::term2::{Terminal, TerminalWriter};
 use crate::widget::{BoxedWidget, ContextOwned, Widget};
