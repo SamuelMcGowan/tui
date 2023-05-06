@@ -121,12 +121,14 @@ impl Buffer {
         offset: impl Into<TermPos>,
         buf: &Buffer,
         override_cursor: bool,
-        clear: Option<Cell>,
+        transparent: bool,
     ) {
         let offset = offset.into();
 
         for (x, buf_x) in (offset.x..self.size.width).zip(0..buf.size.width) {
             for (y, buf_y) in (offset.y..self.size.height).zip(0..buf.size.height) {
+                let clear = if transparent { self[[x, y]] } else { None };
+
                 self[[x, y]] = buf[[buf_x, buf_y]].or(clear);
             }
         }

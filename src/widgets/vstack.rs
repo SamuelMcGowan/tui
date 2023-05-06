@@ -49,7 +49,7 @@ impl<State, Msg> Widget<State, Msg> for VStack<State, Msg> {
             element.buf.resize_and_clear([size.width, element.size]);
             element.widget.render(&mut element.buf);
 
-            buf.blit([0, offset_y], &element.buf, focused, None);
+            buf.blit([0, offset_y], &element.buf, focused, false);
 
             offset_y += element.size;
             if offset_y >= size.height {
