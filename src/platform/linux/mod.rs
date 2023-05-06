@@ -6,7 +6,7 @@ use raw_term::RawTerm;
 
 use super::ansi::AnsiWriter;
 use super::ansi_event::AnsiEvents;
-use super::{Terminal, TerminalWriter};
+use super::{Terminal, Writer};
 use crate::platform::TermSize;
 
 pub struct LinuxTerminal {

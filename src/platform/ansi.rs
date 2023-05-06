@@ -1,7 +1,7 @@
 use std::fmt::Write as _;
 use std::io::{self, Write};
 
-use super::{TermPos, TerminalWriter};
+use super::{TermPos, Writer};
 use crate::style::{Color, Weight};
 
 const CSI: &str = "\x1b[";
@@ -30,7 +30,7 @@ impl<W: Write> AnsiWriter<W> {
     }
 }
 
-impl<W: Write> TerminalWriter for AnsiWriter<W> {
+impl<W: Write> Writer for AnsiWriter<W> {
     fn flush(&mut self) -> io::Result<()> {
         self.writer.write_all(self.buf.as_bytes())?;
         self.buf.clear();

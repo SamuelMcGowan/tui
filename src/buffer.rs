@@ -1,6 +1,6 @@
 use std::ops::{Index, IndexMut};
 
-use crate::platform::{TermPos, TermSize, TerminalWriter};
+use crate::platform::{TermPos, TermSize, Writer};
 use crate::style::Style;
 
 #[derive(Debug, Clone, Copy)]
@@ -117,7 +117,7 @@ impl Buffer {
         }
     }
 
-    pub fn draw_to_terminal<W: TerminalWriter>(&self, term: &mut W) {
+    pub fn draw_to_terminal<W: Writer>(&self, term: &mut W) {
         term.clear_all();
         term.set_cursor_vis(false);
 
