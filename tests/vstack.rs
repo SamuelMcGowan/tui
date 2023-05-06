@@ -1,7 +1,7 @@
 use std::time::Duration;
 
 use tui::app::App;
-use tui::event::{Event, KeyCode, KeyEvent, Modifiers};
+use tui::platform::event::{Event, KeyCode, KeyEvent, Modifiers};
 use tui::widget::{Context, Handled};
 use tui::widgets::{Hooked, SizeConstraint, TextInput, VStack};
 

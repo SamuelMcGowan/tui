@@ -1,5 +1,5 @@
 use crate::buffer::Buffer;
-use crate::event::Event;
+use crate::platform::event::Event;
 use crate::widget::{BoxedWidget, Context, Handled, Widget};
 
 pub struct VStack<State, Msg> {

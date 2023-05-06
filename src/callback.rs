@@ -1,6 +1,6 @@
 use paste::paste;
 
-use crate::event::Event;
+use crate::platform::event::Event;
 use crate::widget::{Context, Handled};
 
 macro_rules! callback_type {

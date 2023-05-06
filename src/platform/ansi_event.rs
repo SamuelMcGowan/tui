@@ -1,8 +1,8 @@
 use std::io;
 use std::time::Instant;
 
+use super::event::*;
 use super::input::PollingStdin;
-use crate::event::*;
 
 #[derive(Default)]
 pub struct AnsiEvents {

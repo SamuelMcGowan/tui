@@ -1,6 +1,6 @@
 use crate::buffer::Buffer;
 use crate::callback::*;
-use crate::event::Event;
+use crate::platform::event::Event;
 use crate::widget::{Context, Handled, Widget};
 
 pub struct Hooked<State, Msg, W: Widget<State, Msg>> {

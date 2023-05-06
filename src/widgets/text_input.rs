@@ -2,7 +2,7 @@ use super::string_editor::TextEdit;
 use super::StringEditor;
 use crate::buffer::{Buffer, Cell};
 use crate::callback::*;
-use crate::event::*;
+use crate::platform::event::*;
 use crate::style::Style;
 use crate::widget::*;
 

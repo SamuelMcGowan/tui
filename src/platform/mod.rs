@@ -4,14 +4,16 @@ mod input;
 
 pub mod linux;
 
+pub mod event;
 pub mod writer;
+
 use std::io;
 
 pub use writer::Writer;
 
 pub trait Terminal: Sized {
     type Writer: Writer;
-    type Events: crate::event::Events;
+    type Events: event::Events;
 
     fn init() -> io::Result<Self>;
     fn size(&self) -> io::Result<TermSize>;

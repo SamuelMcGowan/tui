@@ -1,7 +1,7 @@
 use std::collections::VecDeque;
 
 use crate::buffer::Buffer;
-use crate::event::Event;
+use crate::platform::event::Event;
 
 #[must_use]
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
