@@ -8,7 +8,7 @@ Mouse events are not yet supported and there are currently very few widgets, but
 
 Although I've generally tried to write performant code, I don't know how good the performance is as I haven't done any profiling.
 
-You should probably just use [tui-rs]([I've generally tried to write performant code](https://github.com/fdehau/tui-rs)).
+You should probably just use [tui-rs](https://github.com/fdehau/tui-rs)).
 
 ## TODO
 
