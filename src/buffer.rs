@@ -174,18 +174,7 @@ pub fn draw_diff(old: &Buffer, new: &Buffer, w: &mut impl Writer) {
 
             let cell = new_cell.unwrap_or_default();
 
-            if cell.style.fg != style.fg {
-                w.set_fg_color(cell.style.fg);
-            }
-            if cell.style.bg != style.bg {
-                w.set_bg_color(cell.style.bg);
-            }
-            if cell.style.weight != style.weight {
-                w.set_weight(cell.style.weight);
-            }
-            if cell.style.underline != style.underline {
-                w.set_underline(cell.style.underline);
-            }
+            draw_style_diff(style, cell.style, w);
             style = cell.style;
 
             let cell_pos = TermPos::from([x, y]);
@@ -215,19 +204,23 @@ pub fn draw_diff(old: &Buffer, new: &Buffer, w: &mut impl Writer) {
     }
 }
 
-pub fn draw_no_diff(buf: &Buffer, w: &mut impl Writer) {
+fn draw_no_diff(buf: &Buffer, w: &mut impl Writer) {
     w.clear_all();
+
+    w.set_cursor_home();
     w.set_cursor_vis(false);
 
-    for y in 0..buf.size.height {
-        for x in 0..buf.size.width {
-            w.set_cursor_pos([x, y]);
-            let cell = buf[[x, y]].unwrap_or_default();
+    let mut style = Style::default();
 
-            w.set_fg_color(cell.style.fg);
-            w.set_bg_color(cell.style.bg);
-            w.set_weight(cell.style.weight);
-            w.set_underline(cell.style.underline);
+    for y in 0..buf.size.height {
+        w.set_cursor_pos([0, y]);
+        for x in 0..buf.size.width {
+            let Some(cell) = buf[[x, y]] else {
+                continue;
+            };
+
+            draw_style_diff(style, cell.style, w);
+            style = cell.style;
 
             w.write_char(cell.c);
         }
@@ -241,6 +234,21 @@ pub fn draw_no_diff(buf: &Buffer, w: &mut impl Writer) {
         None => {
             w.set_cursor_vis(false);
         }
+    }
+}
+
+fn draw_style_diff(old: Style, new: Style, w: &mut impl Writer) {
+    if new.fg != old.fg {
+        w.set_fg_color(new.fg);
+    }
+    if new.bg != old.bg {
+        w.set_bg_color(new.bg);
+    }
+    if new.weight != old.weight {
+        w.set_weight(new.weight);
+    }
+    if new.underline != old.underline {
+        w.set_underline(new.underline);
     }
 }
 
