@@ -3,7 +3,7 @@ use std::ops::{Index, IndexMut};
 use crate::platform::{TermPos, TermSize, Writer};
 use crate::style::Style;
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Cell {
     pub c: char,
     pub style: Style,
@@ -24,12 +24,30 @@ impl Cell {
     }
 }
 
-#[derive(Default, Debug, Clone)]
+#[derive(Default, Debug)]
 pub struct Buffer {
-    data: Box<[Option<Cell>]>,
+    data: Vec<Option<Cell>>,
 
     size: TermSize,
     cursor: Option<TermPos>,
+}
+
+impl Clone for Buffer {
+    fn clone(&self) -> Self {
+        Self {
+            data: self.data.clone(),
+
+            size: self.size,
+            cursor: self.cursor,
+        }
+    }
+
+    fn clone_from(&mut self, source: &Self) {
+        self.data.clone_from(&source.data);
+
+        self.size = source.size;
+        self.cursor = source.cursor;
+    }
 }
 
 impl Buffer {
@@ -41,7 +59,7 @@ impl Buffer {
         let size = size.into();
 
         if size != self.size {
-            let data = std::mem::take(&mut self.data).into_vec();
+            let data = std::mem::take(&mut self.data);
             *self = Self::new_inner(size, data);
         } else {
             self.data.fill(None);
@@ -54,7 +72,7 @@ impl Buffer {
         data.extend(std::iter::repeat(None).take(size.area()));
 
         Self {
-            data: data.into_boxed_slice(),
+            data,
 
             size,
             cursor: None,
@@ -74,7 +92,8 @@ impl Buffer {
     }
 
     pub fn get_mut(&mut self, index: impl Into<TermPos>) -> Option<&mut Option<Cell>> {
-        self.data.get_mut(self.index(index)?)
+        let index = self.index(index)?;
+        self.data.get_mut(index)
     }
 
     fn index(&self, pos: impl Into<TermPos>) -> Option<usize> {
@@ -116,35 +135,6 @@ impl Buffer {
             self.cursor = buf.cursor.map(|pos| pos.offset(offset));
         }
     }
-
-    pub fn draw_to_terminal<W: Writer>(&self, term: &mut W) {
-        term.clear_all();
-        term.set_cursor_vis(false);
-
-        for y in 0..self.size.height {
-            for x in 0..self.size.width {
-                term.set_cursor_pos([x, y]);
-                let cell = self[[x, y]].unwrap_or_default();
-
-                term.set_fg_color(cell.style.fg);
-                term.set_bg_color(cell.style.bg);
-                term.set_weight(cell.style.weight);
-                term.set_underline(cell.style.underline);
-
-                term.write_char(cell.c);
-            }
-        }
-
-        match self.cursor {
-            Some(pos) => {
-                term.set_cursor_pos(pos);
-                term.set_cursor_vis(true);
-            }
-            None => {
-                term.set_cursor_vis(false);
-            }
-        }
-    }
 }
 
 impl<I: Into<TermPos>> Index<I> for Buffer {
@@ -158,6 +148,99 @@ impl<I: Into<TermPos>> Index<I> for Buffer {
 impl<I: Into<TermPos>> IndexMut<I> for Buffer {
     fn index_mut(&mut self, index: I) -> &mut Self::Output {
         self.get_mut(index).expect("out of bounds")
+    }
+}
+
+pub fn draw_diff(old: &Buffer, new: &Buffer, w: &mut impl Writer) {
+    // TODO: always use diff.
+    if old.size() != new.size() {
+        draw_no_diff(new, w);
+        return;
+    }
+
+    w.set_cursor_home();
+
+    let mut cursor_pos = TermPos::from([0, 0]);
+    let mut style = Style::default();
+
+    for y in 0..new.size().height {
+        for x in 0..new.size().width {
+            let old_cell = old[[x, y]];
+            let new_cell = new[[x, y]];
+
+            if old_cell == new_cell {
+                continue;
+            }
+
+            let cell = new_cell.unwrap_or_default();
+
+            if cell.style.fg != style.fg {
+                w.set_fg_color(cell.style.fg);
+            }
+            if cell.style.bg != style.bg {
+                w.set_bg_color(cell.style.bg);
+            }
+            if cell.style.weight != style.weight {
+                w.set_weight(cell.style.weight);
+            }
+            if cell.style.underline != style.underline {
+                w.set_underline(cell.style.underline);
+            }
+            style = cell.style;
+
+            let cell_pos = TermPos::from([x, y]);
+            if cell_pos != cursor_pos {
+                w.set_cursor_pos(cell_pos);
+                cursor_pos = cell_pos;
+            }
+
+            cursor_pos.x = cursor_pos.x.saturating_add(1);
+
+            w.write_char(cell.c);
+        }
+    }
+
+    match (old.cursor(), new.cursor()) {
+        (None, None) => {}
+        (None, Some(pos)) => {
+            w.set_cursor_pos(pos);
+            w.set_cursor_vis(true);
+        }
+        (Some(_), None) => {
+            w.set_cursor_vis(false);
+        }
+        (Some(_), Some(new)) => {
+            w.set_cursor_pos(new);
+        }
+    }
+}
+
+pub fn draw_no_diff(buf: &Buffer, w: &mut impl Writer) {
+    w.clear_all();
+    w.set_cursor_vis(false);
+
+    for y in 0..buf.size.height {
+        for x in 0..buf.size.width {
+            w.set_cursor_pos([x, y]);
+            let cell = buf[[x, y]].unwrap_or_default();
+
+            w.set_fg_color(cell.style.fg);
+            w.set_bg_color(cell.style.bg);
+            w.set_weight(cell.style.weight);
+            w.set_underline(cell.style.underline);
+
+            w.write_char(cell.c);
+        }
+    }
+
+    match buf.cursor {
+        Some(pos) => {
+            w.set_cursor_pos(pos);
+            w.set_cursor_vis(true);
+        }
+        None => {
+            w.set_cursor_vis(false);
+        }
     }
 }
 

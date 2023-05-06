@@ -1,7 +1,7 @@
 use std::io;
 use std::time::{Duration, Instant};
 
-use crate::buffer::Buffer;
+use crate::buffer::{draw_diff, Buffer};
 use crate::platform::event::Events as _;
 use crate::platform::linux::LinuxTerminal;
 use crate::platform::{Terminal, Writer};
@@ -11,6 +11,8 @@ pub struct App<State, Msg> {
     context: ContextOwned<State, Msg>,
 
     root: BoxedWidget<State, Msg>,
+
+    root_buf_prev: Buffer,
     root_buf: Buffer,
 
     term: LinuxTerminal,
@@ -31,6 +33,8 @@ impl<State, Msg> App<State, Msg> {
             context: ContextOwned::new(state),
 
             root: Box::new(root),
+
+            root_buf_prev: Buffer::new(term_size),
             root_buf: Buffer::new(term_size),
 
             term,
@@ -69,7 +73,10 @@ impl<State, Msg> App<State, Msg> {
 
         self.root.render(&mut self.root_buf);
 
-        self.root_buf.draw_to_terminal(self.term.writer());
+        draw_diff(&self.root_buf_prev, &self.root_buf, self.term.writer());
+
+        self.root_buf_prev.clone_from(&self.root_buf);
+
         self.term.writer().flush()
     }
 }

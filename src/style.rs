@@ -21,7 +21,7 @@ pub enum Weight {
     Dim,
 }
 
-#[derive(Default, Debug, Clone, Copy)]
+#[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Style {
     pub fg: Color,
     pub bg: Color,
