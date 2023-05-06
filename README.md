@@ -2,5 +2,20 @@
 
 ## TODO
 
-- Test event parsing.
-- Create widget types (esp. adaptor type, which has its own context).
+- Mouse events
+- Testing
+
+### Widgets
+
+- HStack (generalise layout code)
+- Overlap
+- Scroll Area
+- Label
+- Button
+- Slider
+- Checklist
+
+### Currently not planned
+
+- Canvas widget
+- Theming
