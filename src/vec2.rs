@@ -1,6 +1,6 @@
 use std::ops::{Add, Sub};
 
-// A 16-bit vector type.
+/// A 16-bit 2D vector.
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Vec2 {
     pub x: u16,
