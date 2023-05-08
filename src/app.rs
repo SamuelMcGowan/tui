@@ -58,6 +58,12 @@ impl<State, Msg> App<State, Msg> {
                 let _ = self.root.handle_event(&mut self.context.borrow(), &event);
             }
 
+            // TODO: permanent allocation for this
+            let msgs = std::mem::take(&mut self.context.messages);
+            for msg in msgs {
+                let _ = self.root.handle_msg(&mut self.context.borrow(), &msg);
+            }
+
             if self.context.should_quit {
                 break;
             }

@@ -87,9 +87,12 @@ impl<Flow, State, Msg> Stack<Flow, State, Msg> {
     }
 
     fn handle_msg(&mut self, ctx: &mut Context<State, Msg>, msg: &Msg) -> Handled {
-        self.focused_mut()
-            .map(|elem| elem.widget.handle_msg(ctx, msg))
-            .unwrap_or(Handled::No)
+        for element in &mut self.elements {
+            if let Handled::Yes = element.widget.handle_msg(ctx, msg) {
+                break;
+            }
+        }
+        Handled::No
     }
 
     fn update(&mut self, ctx: &mut Context<State, Msg>) {
