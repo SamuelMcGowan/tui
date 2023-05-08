@@ -78,7 +78,7 @@ impl<State, Msg> Widget<State, Msg> for TextInput<State, Msg> {
             .as_str()
             .chars()
             .enumerate()
-            .take(size.width as usize - 1)
+            .take(size.width as usize)
         {
             buf[[x as u16, 0]] = Some(Cell::new(c, self.state.style));
         }

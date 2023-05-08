@@ -18,7 +18,6 @@ You should probably just use [tui-rs](https://github.com/fdehau/tui-rs).
 
 ### Widgets
 
-- HStack (generalise layout code)
 - Overlap
 - Scroll Area
 - Label
