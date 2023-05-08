@@ -68,10 +68,6 @@ impl Buffer {
             set_cursor,
         }
     }
-
-    pub fn cursor(&self) -> Option<Vec2> {
-        self.cursor
-    }
 }
 
 #[derive(Debug)]
@@ -116,13 +112,13 @@ impl<'a> BufferView<'a> {
     }
 
     fn index(&self, index: impl Into<Vec2>) -> Option<usize> {
-        let pos: Vec2 = self.start + index.into();
+        let index: Vec2 = self.start + index.into();
 
-        if pos.x >= self.end.x || pos.y >= self.end.y {
+        if index.x >= self.end.x || index.y >= self.end.y {
             return None;
         }
 
-        let index = pos.y as usize * self.buf.size.x as usize + pos.x as usize;
+        let index = index.y as usize * self.buf.size.x as usize + index.x as usize;
 
         Some(index)
     }
@@ -137,6 +133,16 @@ impl<'a> BufferView<'a> {
 
             if pos.x < self.end.x && pos.y < self.end.y {
                 Some(pos)
+            } else {
+                None
+            }
+        })
+    }
+
+    pub fn cursor(&self) -> Option<Vec2> {
+        self.buf.cursor.and_then(|index| {
+            if index.both_gteq(self.start) && index.both_lt(self.end) {
+                Some(index - self.start)
             } else {
                 None
             }
@@ -191,10 +197,10 @@ mod tests {
         view[[9, 9]] = Some(Cell::new('d', Style::default()));
 
         view.set_cursor(Some([9, 9]));
-        assert_eq!(view.buf.cursor(), Some([9, 9].into()));
+        assert_eq!(view.cursor(), Some([9, 9].into()));
 
         view.set_cursor(Some([10, 10]));
-        assert_eq!(view.buf.cursor(), None);
+        assert_eq!(view.cursor(), None);
 
         assert_matches!(view[[0, 0]], Some(cell) if cell.c == 'a');
         assert_matches!(view[[0, 9]], Some(cell) if cell.c == 'b');
@@ -218,10 +224,10 @@ mod tests {
         view2[[7, 7]] = Some(Cell::new('d', Style::default()));
 
         view2.set_cursor(Some([8, 8]));
-        assert_eq!(view2.buf.cursor(), None);
+        assert_eq!(view2.cursor(), None);
 
         view2.set_cursor(Some([7, 7]));
-        assert_eq!(view2.buf.cursor(), Some([8, 8].into()));
+        assert_eq!(view2.cursor(), Some([7, 7].into()));
 
         assert_matches!(view2[[0, 0]], Some(cell) if cell.c == 'a');
         assert_matches!(view2[[0, 7]], Some(cell) if cell.c == 'b');
@@ -234,5 +240,7 @@ mod tests {
         assert_matches!(view[[1, 8]], Some(cell) if cell.c == 'b');
         assert_matches!(view[[2, 1]], Some(cell) if cell.c == 'c');
         assert_matches!(view[[8, 8]], Some(cell) if cell.c == 'd');
+
+        assert_eq!(view.cursor(), Some([8, 8].into()));
     }
 }

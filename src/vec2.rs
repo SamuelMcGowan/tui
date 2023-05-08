@@ -33,6 +33,65 @@ impl Vec2 {
     pub fn area(&self) -> usize {
         self.x as usize * self.y as usize
     }
+
+    #[inline]
+    pub fn checked_add(&self, rhs: Self) -> Option<Self> {
+        Some(Self {
+            x: self.x.checked_add(rhs.x)?,
+            y: self.y.checked_add(rhs.y)?,
+        })
+    }
+
+    #[inline]
+    pub fn checked_sub(&self, rhs: Self) -> Option<Self> {
+        Some(Self {
+            x: self.x.checked_sub(rhs.x)?,
+            y: self.y.checked_sub(rhs.y)?,
+        })
+    }
+
+    // These aren't really necessary but I've written them now and they're not doing
+    // anyone any harm.
+
+    #[inline]
+    pub fn either_lt(&self, rhs: Self) -> bool {
+        self.x < rhs.x || self.y < rhs.y
+    }
+
+    #[inline]
+    pub fn either_gt(&self, rhs: Self) -> bool {
+        self.x > rhs.x || self.y > rhs.y
+    }
+
+    #[inline]
+    pub fn either_lteq(&self, rhs: Self) -> bool {
+        self.x <= rhs.x || self.y <= rhs.y
+    }
+
+    #[inline]
+    pub fn either_gteq(&self, rhs: Self) -> bool {
+        self.x >= rhs.x || self.y >= rhs.y
+    }
+
+    #[inline]
+    pub fn both_lt(&self, rhs: Self) -> bool {
+        self.x < rhs.x && self.y < rhs.y
+    }
+
+    #[inline]
+    pub fn both_gt(&self, rhs: Self) -> bool {
+        self.x > rhs.x && self.y > rhs.y
+    }
+
+    #[inline]
+    pub fn both_lteq(&self, rhs: Self) -> bool {
+        self.x <= rhs.x && self.y <= rhs.y
+    }
+
+    #[inline]
+    pub fn both_gteq(&self, rhs: Self) -> bool {
+        self.x >= rhs.x && self.y >= rhs.y
+    }
 }
 
 impl Add<Vec2> for Vec2 {
