@@ -1,6 +1,6 @@
 use std::io;
 
-use crate::style::{Color, Weight};
+use crate::style::{Color, Style, Weight};
 use crate::vec2::Vec2;
 
 pub trait Writer {
@@ -22,4 +22,6 @@ pub trait Writer {
 
     fn write_char(&mut self, c: char);
     fn write_str(&mut self, s: &str);
+
+    fn write_style(&mut self, style: Style);
 }

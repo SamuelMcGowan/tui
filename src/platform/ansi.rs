@@ -102,4 +102,11 @@ impl<W: Write> Writer for AnsiWriter<W> {
             write!(self.buf, "{part}").unwrap();
         }
     }
+
+    fn write_style(&mut self, style: crate::style::Style) {
+        self.set_fg_color(style.fg);
+        self.set_bg_color(style.bg);
+        self.set_weight(style.weight);
+        self.set_underline(style.underline);
+    }
 }

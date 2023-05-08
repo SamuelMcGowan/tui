@@ -7,6 +7,7 @@ use raw_term::RawTerm;
 use super::ansi::AnsiWriter;
 use super::ansi_event::AnsiEvents;
 use super::{Terminal, Writer};
+use crate::style::Style;
 use crate::vec2::Vec2;
 
 pub struct LinuxTerminal {
@@ -40,5 +41,16 @@ impl Terminal for LinuxTerminal {
 
     fn events(&mut self) -> &mut Self::Events {
         &mut self.events
+    }
+}
+
+impl Drop for LinuxTerminal {
+    fn drop(&mut self) {
+        self.writer().clear_all();
+        self.writer().set_cursor_home();
+        self.writer().set_cursor_vis(true);
+        self.writer().write_style(Style::default());
+
+        let _ = self.writer().flush();
     }
 }

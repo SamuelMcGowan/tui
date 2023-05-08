@@ -15,7 +15,7 @@ pub fn draw_diff(old: &BufferView, new: &BufferView, w: &mut impl Writer) {
     let mut cursor_pos = Vec2::from([0, 0]);
     let mut style = Style::default();
 
-    draw_style(style, w);
+    w.write_style(style);
 
     for y in 0..new.size().y {
         for x in 0..new.size().x {
@@ -61,7 +61,7 @@ fn draw_no_diff(buf: &BufferView, w: &mut impl Writer) {
     w.set_cursor_vis(false);
 
     let mut style = Style::default();
-    draw_style(style, w);
+    w.write_style(style);
 
     let mut pos_dirty = false;
 
@@ -109,11 +109,4 @@ fn draw_style_diff(old: Style, new: Style, w: &mut impl Writer) {
     if new.underline != old.underline {
         w.set_underline(new.underline);
     }
-}
-
-fn draw_style(style: Style, w: &mut impl Writer) {
-    w.set_fg_color(style.fg);
-    w.set_bg_color(style.bg);
-    w.set_weight(style.weight);
-    w.set_underline(style.underline);
 }
