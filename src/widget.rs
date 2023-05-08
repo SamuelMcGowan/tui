@@ -1,6 +1,6 @@
 use std::collections::VecDeque;
 
-use crate::buffer::Buffer;
+use crate::buffer2::BufferView;
 use crate::platform::event::Event;
 
 #[must_use]
@@ -25,7 +25,7 @@ pub trait Widget<State, Msg> {
     #[allow(unused_variables)]
     fn update(&mut self, ctx: &mut Context<State, Msg>) {}
 
-    fn render(&mut self, buf: &mut Buffer);
+    fn render(&mut self, buf: &mut BufferView);
 }
 
 pub type BoxedWidget<State, Msg> = Box<dyn Widget<State, Msg>>;

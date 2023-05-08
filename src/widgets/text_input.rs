@@ -1,6 +1,6 @@
 use super::string_editor::TextEdit;
 use super::StringEditor;
-use crate::buffer::{Buffer, Cell};
+use crate::buffer2::{BufferView, Cell};
 use crate::callback::*;
 use crate::platform::event::*;
 use crate::style::Style;
@@ -65,7 +65,7 @@ impl<State, Msg> Widget<State, Msg> for TextInput<State, Msg> {
         }
     }
 
-    fn render(&mut self, buf: &mut Buffer) {
+    fn render(&mut self, buf: &mut BufferView) {
         let size = buf.size();
 
         if size.area() == 0 {

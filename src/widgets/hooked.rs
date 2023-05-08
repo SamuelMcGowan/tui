@@ -1,4 +1,4 @@
-use crate::buffer::Buffer;
+use crate::buffer2::BufferView;
 use crate::callback::*;
 use crate::platform::event::Event;
 use crate::widget::{Context, Handled, Widget};
@@ -60,7 +60,7 @@ impl<State, Msg, W: Widget<State, Msg>> Widget<State, Msg> for Hooked<State, Msg
         self.update_hook.call(ctx, &mut self.widget);
     }
 
-    fn render(&mut self, buf: &mut Buffer) {
+    fn render(&mut self, buf: &mut BufferView) {
         self.widget.render(buf);
     }
 }

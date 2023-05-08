@@ -1,7 +1,8 @@
 use std::io;
 use std::time::{Duration, Instant};
 
-use crate::buffer::{draw_diff, Buffer};
+use crate::buffer2::Buffer;
+use crate::draw_buffer::draw_diff;
 use crate::platform::event::Events as _;
 use crate::platform::linux::LinuxTerminal;
 use crate::platform::{Terminal, Writer};
@@ -68,13 +69,20 @@ impl<State, Msg> App<State, Msg> {
     }
 
     fn render(&mut self) -> io::Result<()> {
+        // Resize buffer.
         let term_size = self.term.size()?;
         self.root_buf.resize_and_clear(term_size);
 
-        self.root.render(&mut self.root_buf);
+        // Render widget to buffer.
+        let mut root_buf_view = self.root_buf.view(true);
+        self.root.render(&mut root_buf_view);
 
-        draw_diff(&self.root_buf_prev, &self.root_buf, self.term.writer());
+        // Draw changes to terminal.
+        // TODO: make immutable view type.
+        let root_buf_prev_view = self.root_buf_prev.view(false);
+        draw_diff(&root_buf_prev_view, &root_buf_view, self.term.writer());
 
+        // Swap buffers.
         self.root_buf_prev.clone_from(&self.root_buf);
 
         self.term.writer().flush()

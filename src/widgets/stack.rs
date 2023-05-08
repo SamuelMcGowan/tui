@@ -1,6 +1,6 @@
 use std::marker::PhantomData;
 
-use crate::buffer::Buffer;
+use crate::buffer2::BufferView;
 use crate::platform::event::Event;
 use crate::widget::{BoxedWidget, Context, Handled, Widget};
 
@@ -41,7 +41,6 @@ impl<Flow, State, Msg> Stack<Flow, State, Msg> {
         self.elements.push(StackElement {
             widget: Box::new(widget),
             constraint,
-            buf: Buffer::default(),
             size: 0,
         });
     }
@@ -181,7 +180,7 @@ impl<State, Msg> Widget<State, Msg> for Stack<Vertical, State, Msg> {
         self.update(ctx)
     }
 
-    fn render(&mut self, buf: &mut Buffer) {
+    fn render(&mut self, buf: &mut BufferView) {
         let size = buf.size();
         self.allocate_space(size.y);
 
@@ -190,10 +189,8 @@ impl<State, Msg> Widget<State, Msg> for Stack<Vertical, State, Msg> {
             // This is dumb.
             let focused = self.focused == Some(i);
 
-            element.buf.resize_and_clear([size.x, element.size]);
-            element.widget.render(&mut element.buf);
-
-            buf.blit([0, offset_y], &element.buf, focused, false);
+            let mut buf_view = buf.view([0, offset_y], [size.x, offset_y + element.size], focused);
+            element.widget.render(&mut buf_view);
 
             offset_y += element.size;
             if offset_y >= size.y {
@@ -216,7 +213,7 @@ impl<State, Msg> Widget<State, Msg> for Stack<Horizontal, State, Msg> {
         self.update(ctx)
     }
 
-    fn render(&mut self, buf: &mut Buffer) {
+    fn render(&mut self, buf: &mut BufferView) {
         let size = buf.size();
         self.allocate_space(size.x);
 
@@ -225,10 +222,8 @@ impl<State, Msg> Widget<State, Msg> for Stack<Horizontal, State, Msg> {
             // Still dumb.
             let focused = self.focused == Some(i);
 
-            element.buf.resize_and_clear([element.size, size.y]);
-            element.widget.render(&mut element.buf);
-
-            buf.blit([offset_x, 0], &element.buf, focused, false);
+            let mut buf_view = buf.view([offset_x, 0], [offset_x + element.size, size.y], focused);
+            element.widget.render(&mut buf_view);
 
             offset_x += element.size;
             if offset_x >= size.x {
@@ -241,8 +236,6 @@ impl<State, Msg> Widget<State, Msg> for Stack<Horizontal, State, Msg> {
 pub struct StackElement<State, Msg> {
     pub widget: BoxedWidget<State, Msg>,
     pub constraint: SizeConstraint,
-
-    pub(crate) buf: Buffer,
     pub(crate) size: u16,
 }
 
