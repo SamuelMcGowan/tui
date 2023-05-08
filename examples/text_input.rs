@@ -4,8 +4,7 @@ use tui::app::App;
 use tui::callback::Callback;
 use tui::widgets::{TextInput, TextInputState};
 
-#[test]
-fn foo() {
+fn main() {
     let root = TextInput::new().on_enter(Callback::new(|_ctx, widget: &mut TextInputState| {
         widget.text.clear();
     }));

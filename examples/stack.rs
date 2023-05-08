@@ -4,11 +4,10 @@ use tui::app::App;
 use tui::callback::EventHook;
 use tui::platform::event::{Event, KeyCode, KeyEvent, Modifiers};
 use tui::style::{Color, Style};
-use tui::widget::{Context, Handled};
+use tui::widget::Handled;
 use tui::widgets::*;
 
-#[test]
-fn foo() {
+fn main() {
     let mut vstack = VStack::new();
     vstack.add_widget(
         Label::new("Hello, World!").with_style(Style {

@@ -4,12 +4,7 @@ use tui::app::App;
 use tui::style::{Color, Style, Weight};
 use tui::widgets::*;
 
-mod logger;
-
-#[test]
-fn foo() {
-    logger::init_logger();
-
+fn main() {
     let label_style = Style::new().with_fg(Color::Red).with_weight(Weight::Bold);
     let border_style = Style::new().with_fg(Color::Yellow);
 
