@@ -35,15 +35,25 @@ fn root() -> impl Widget<(), Message> {
 }
 
 fn stack() -> impl Widget<(), Message> {
-    let text_field = bordered(text_input());
-    let label = bordered(label());
-
     let mut stack = VStack::new();
-    stack.add_widget(text_field, SizeConstraint::fixed(3));
-    stack.add_widget(label, SizeConstraint::new());
+    stack.add_widget(bordered(text_input()), SizeConstraint::fixed(3));
+    stack.add_widget(bordered(todo_list()), SizeConstraint::new());
     stack.set_focus(Some(0));
 
     stack
+}
+
+fn todo_list() -> impl Widget<(), Message> {
+    let stack = VStack::new();
+
+    Hooked::new(stack).msg_hook(MsgHook::new(
+        |_ctx, widget: &mut VStack<(), Message>, msg| match msg {
+            Message::TextEntered(s) => {
+                widget.add_widget(Label::new(format!("TODO: {s}")), SizeConstraint::fixed(1));
+                Handled::Yes
+            }
+        },
+    ))
 }
 
 fn text_input() -> impl Widget<(), Message> {
@@ -57,17 +67,6 @@ fn text_input() -> impl Widget<(), Message> {
         widget.text.clear();
         ctx.write_msg(Message::TextEntered(s));
     }))
-}
-
-fn label() -> impl Widget<(), Message> {
-    Hooked::new(Label::new("--")).msg_hook(MsgHook::new(
-        |_ctx, widget: &mut Label, msg| match msg {
-            Message::TextEntered(s) => {
-                widget.text = s.to_uppercase();
-                Handled::Yes
-            }
-        },
-    ))
 }
 
 fn bordered(w: impl Widget<(), Message> + 'static) -> impl Widget<(), Message> {
