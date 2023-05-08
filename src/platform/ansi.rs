@@ -78,8 +78,8 @@ impl<W: Write> Writer for AnsiWriter<W> {
     fn set_weight(&mut self, weight: Weight) {
         match weight {
             Weight::Normal => write!(self.buf, "{CSI}22m").unwrap(),
-            Weight::Bold => write!(self.buf, "{CSI}1").unwrap(),
-            Weight::Dim => write!(self.buf, "{CSI}2").unwrap(),
+            Weight::Bold => write!(self.buf, "{CSI}1m").unwrap(),
+            Weight::Dim => write!(self.buf, "{CSI}2m").unwrap(),
         }
     }
 
