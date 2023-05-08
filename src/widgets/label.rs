@@ -4,8 +4,8 @@ use crate::widget::Widget;
 
 #[derive(Default)]
 pub struct Label {
-    text: String,
-    style: Style,
+    pub text: String,
+    pub style: Style,
 }
 
 impl Label {
