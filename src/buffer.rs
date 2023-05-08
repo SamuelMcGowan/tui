@@ -1,6 +1,5 @@
 use std::ops::{Index, IndexMut};
 
-use crate::platform::Writer;
 use crate::style::Style;
 use crate::vec2::Vec2;
 
@@ -27,8 +26,7 @@ impl Cell {
 
 #[derive(Default, Debug)]
 pub struct Buffer {
-    data: Vec<Option<Cell>>,
-
+    buf: Vec<Option<Cell>>,
     size: Vec2,
     cursor: Option<Vec2>,
 }
@@ -36,16 +34,14 @@ pub struct Buffer {
 impl Clone for Buffer {
     fn clone(&self) -> Self {
         Self {
-            data: self.data.clone(),
-
+            buf: self.buf.clone(),
             size: self.size,
             cursor: self.cursor,
         }
     }
 
     fn clone_from(&mut self, source: &Self) {
-        self.data.clone_from(&source.data);
-
+        self.buf.clone_from(&source.buf);
         self.size = source.size;
         self.cursor = source.cursor;
     }
@@ -53,94 +49,124 @@ impl Clone for Buffer {
 
 impl Buffer {
     pub fn new(size: impl Into<Vec2>) -> Self {
-        Self::new_inner(size.into(), vec![])
-    }
-
-    pub fn resize_and_clear(&mut self, size: impl Into<Vec2>) {
-        let size = size.into();
-
-        if size != self.size {
-            let data = std::mem::take(&mut self.data);
-            *self = Self::new_inner(size, data);
-        } else {
-            self.data.fill(None);
-            self.cursor = None;
-        }
-    }
-
-    fn new_inner(size: Vec2, mut data: Vec<Option<Cell>>) -> Self {
-        data.clear();
-        data.extend(std::iter::repeat(None).take(size.area()));
-
+        let size: Vec2 = size.into();
         Self {
-            data,
-
+            buf: vec![None; size.area()],
             size,
             cursor: None,
         }
     }
 
-    pub fn size(&self) -> Vec2 {
-        self.size
+    pub fn resize_and_clear(&mut self, size: impl Into<Vec2>) {
+        let size: Vec2 = size.into();
+
+        if size != self.size {
+            self.buf.clear();
+            self.buf.extend(std::iter::repeat(None).take(size.area()));
+            self.size = size;
+        } else {
+            self.buf.fill(None);
+        }
+
+        self.cursor = None;
     }
 
-    pub fn as_slice(&self) -> &[Option<Cell>] {
-        &self.data
+    pub fn view(&mut self, set_cursor: bool) -> BufferView {
+        let start = [0, 0].into();
+        let end = self.size;
+
+        BufferView {
+            buf: self,
+
+            start,
+            end,
+
+            set_cursor,
+        }
+    }
+}
+
+#[derive(Debug)]
+pub struct BufferView<'a> {
+    buf: &'a mut Buffer,
+
+    start: Vec2,
+    end: Vec2,
+
+    set_cursor: bool,
+}
+
+impl<'a> BufferView<'a> {
+    pub fn view(
+        &mut self,
+        start: impl Into<Vec2>,
+        end: impl Into<Vec2>,
+        set_cursor: bool,
+    ) -> BufferView {
+        let start = start.into();
+        let end = end.into();
+
+        BufferView {
+            buf: self.buf,
+            start: (self.start + start).min(self.end),
+            end: (self.start + end).min(self.end),
+            set_cursor: set_cursor && self.set_cursor,
+        }
+    }
+
+    pub fn size(&self) -> Vec2 {
+        self.end - self.start
     }
 
     pub fn get(&self, index: impl Into<Vec2>) -> Option<&Option<Cell>> {
-        self.data.get(self.index(index)?)
+        self.buf.buf.get(self.index(index)?)
     }
 
     pub fn get_mut(&mut self, index: impl Into<Vec2>) -> Option<&mut Option<Cell>> {
         let index = self.index(index)?;
-        self.data.get_mut(index)
+        self.buf.buf.get_mut(index)
     }
 
-    fn index(&self, pos: impl Into<Vec2>) -> Option<usize> {
-        let pos = pos.into();
+    fn index(&self, index: impl Into<Vec2>) -> Option<usize> {
+        let index: Vec2 = self.start + index.into();
 
-        if pos.x >= self.size.x || pos.y > self.size.y {
+        if index.x >= self.end.x || index.y >= self.end.y {
             return None;
         }
 
-        let index = pos.y as usize * self.size.x as usize + pos.x as usize;
+        let index = index.y as usize * self.buf.size.x as usize + index.x as usize;
 
         Some(index)
     }
 
     pub fn set_cursor(&mut self, cursor: Option<impl Into<Vec2>>) {
-        self.cursor = cursor.map(Into::into);
+        if !self.set_cursor {
+            return;
+        }
+
+        self.buf.cursor = cursor.and_then(|pos| {
+            let pos: Vec2 = self.start + pos.into();
+
+            if pos.x < self.end.x && pos.y < self.end.y {
+                Some(pos)
+            } else {
+                None
+            }
+        })
     }
 
     pub fn cursor(&self) -> Option<Vec2> {
-        self.cursor
-    }
-
-    pub fn blit(
-        &mut self,
-        offset: impl Into<Vec2>,
-        buf: &Buffer,
-        override_cursor: bool,
-        transparent: bool,
-    ) {
-        let offset = offset.into();
-
-        for (x, buf_x) in (offset.x..self.size.x).zip(0..buf.size.x) {
-            for (y, buf_y) in (offset.y..self.size.y).zip(0..buf.size.y) {
-                let clear = if transparent { self[[x, y]] } else { None };
-
-                self[[x, y]] = buf[[buf_x, buf_y]].or(clear);
+        self.buf.cursor.and_then(|index| {
+            if index.both_gteq(self.start) && index.both_lt(self.end) {
+                Some(index - self.start)
+            } else {
+                None
             }
-        }
-
-        if override_cursor {
-            self.cursor = buf.cursor.map(|pos| pos + offset);
-        }
+        })
     }
 }
 
-impl<I: Into<Vec2>> Index<I> for Buffer {
+impl<I: Into<Vec2>> Index<I> for BufferView<'_> {
     type Output = Option<Cell>;
 
     fn index(&self, index: I) -> &Self::Output {
@@ -148,109 +174,9 @@ impl<I: Into<Vec2>> Index<I> for Buffer {
     }
 }
 
-impl<I: Into<Vec2>> IndexMut<I> for Buffer {
+impl<I: Into<Vec2>> IndexMut<I> for BufferView<'_> {
     fn index_mut(&mut self, index: I) -> &mut Self::Output {
         self.get_mut(index).expect("out of bounds")
-    }
-}
-
-pub fn draw_diff(old: &Buffer, new: &Buffer, w: &mut impl Writer) {
-    if old.size() != new.size() {
-        draw_no_diff(new, w);
-        return;
-    }
-
-    w.set_cursor_home();
-
-    let mut cursor_pos = Vec2::from([0, 0]);
-    let mut style = Style::default();
-
-    for y in 0..new.size.y {
-        for x in 0..new.size.x {
-            let old_cell = old[[x, y]];
-            let new_cell = new[[x, y]];
-
-            if old_cell == new_cell {
-                continue;
-            }
-
-            let cell = new_cell.unwrap_or_default();
-
-            draw_style_diff(style, cell.style, w);
-            style = cell.style;
-
-            let cell_pos = Vec2::from([x, y]);
-            if cell_pos != cursor_pos {
-                w.set_cursor_pos(cell_pos);
-                cursor_pos = cell_pos;
-            }
-
-            cursor_pos.x = cursor_pos.x.saturating_add(1);
-
-            w.write_char(cell.c);
-        }
-    }
-
-    match (old.cursor(), new.cursor()) {
-        (None, None) => {}
-        (None, Some(pos)) => {
-            w.set_cursor_pos(pos);
-            w.set_cursor_vis(true);
-        }
-        (Some(_), None) => {
-            w.set_cursor_vis(false);
-        }
-        (Some(_), Some(new)) => {
-            w.set_cursor_pos(new);
-        }
-    }
-}
-
-fn draw_no_diff(buf: &Buffer, w: &mut impl Writer) {
-    w.clear_all();
-
-    w.set_cursor_home();
-    w.set_cursor_vis(false);
-
-    let mut style = Style::default();
-
-    for y in 0..buf.size.y {
-        w.set_cursor_pos([0, y]);
-        for x in 0..buf.size.x {
-            let Some(cell) = buf[[x, y]] else {
-                continue;
-            };
-
-            draw_style_diff(style, cell.style, w);
-            style = cell.style;
-
-            w.write_char(cell.c);
-        }
-    }
-
-    match buf.cursor {
-        Some(pos) => {
-            w.set_cursor_pos(pos);
-            w.set_cursor_vis(true);
-        }
-        None => {
-            w.set_cursor_vis(false);
-        }
-    }
-}
-
-fn draw_style_diff(old: Style, new: Style, w: &mut impl Writer) {
-    if new.fg != old.fg {
-        w.set_fg_color(new.fg);
-    }
-    if new.bg != old.bg {
-        w.set_bg_color(new.bg);
-    }
-    if new.weight != old.weight {
-        w.set_weight(new.weight);
-    }
-    if new.underline != old.underline {
-        w.set_underline(new.underline);
     }
 }
 
@@ -259,20 +185,78 @@ mod tests {
     use super::{Buffer, Cell};
     use crate::style::Style;
 
+    macro_rules! assert_matches {
+        ($e:expr, $p:pat $( if $guard:expr )?) => {{
+            match $e {
+                $p $( if $guard )? => {}
+                value => {
+                    panic!(
+                        "assertion failed: expected {}, found {:?}",
+                        stringify!($p $( if $guard )?),
+                        value
+                    );
+                }
+            }
+        }};
+    }
+
     #[test]
     fn set_cells() {
         let mut buffer = Buffer::new([10, 10]);
+        let mut view = buffer.view(true);
 
-        buffer[[0, 0]] = Some(Cell::new('a', Style::default()));
-        buffer[[0, 9]] = Some(Cell::new('b', Style::default()));
-        buffer[[1, 0]] = Some(Cell::new('c', Style::default()));
-        buffer[[9, 9]] = Some(Cell::new('d', Style::default()));
+        assert_eq!(view.size(), [10, 10].into());
 
-        assert!(matches!(buffer[[0, 0]], Some(cell) if cell.c == 'a'));
-        assert!(matches!(buffer[[0, 9]], Some(cell) if cell.c == 'b'));
-        assert!(matches!(buffer[[1, 0]], Some(cell) if cell.c == 'c'));
-        assert!(matches!(buffer[[9, 9]], Some(cell) if cell.c == 'd'));
+        view[[0, 0]] = Some(Cell::new('a', Style::default()));
+        view[[0, 9]] = Some(Cell::new('b', Style::default()));
+        view[[1, 0]] = Some(Cell::new('c', Style::default()));
+        view[[9, 9]] = Some(Cell::new('d', Style::default()));
 
-        assert!(buffer.get([10, 10]).is_none());
+        view.set_cursor(Some([9, 9]));
+        assert_eq!(view.cursor(), Some([9, 9].into()));
+
+        view.set_cursor(Some([10, 10]));
+        assert_eq!(view.cursor(), None);
+
+        assert_matches!(view[[0, 0]], Some(cell) if cell.c == 'a');
+        assert_matches!(view[[0, 9]], Some(cell) if cell.c == 'b');
+        assert_matches!(view[[1, 0]], Some(cell) if cell.c == 'c');
+        assert_matches!(view[[9, 9]], Some(cell) if cell.c == 'd');
+
+        assert!(view.get([10, 10]).is_none());
+    }
+
+    #[test]
+    fn view() {
+        let mut buffer = Buffer::new([10, 10]);
+        let mut view = buffer.view(true);
+        let mut view2 = view.view([1, 1], [9, 9], true);
+
+        assert_eq!(view2.size(), [8, 8].into());
+
+        view2[[0, 0]] = Some(Cell::new('a', Style::default()));
+        view2[[0, 7]] = Some(Cell::new('b', Style::default()));
+        view2[[1, 0]] = Some(Cell::new('c', Style::default()));
+        view2[[7, 7]] = Some(Cell::new('d', Style::default()));
+
+        view2.set_cursor(Some([8, 8]));
+        assert_eq!(view2.cursor(), None);
+
+        view2.set_cursor(Some([7, 7]));
+        assert_eq!(view2.cursor(), Some([7, 7].into()));
+
+        assert_matches!(view2[[0, 0]], Some(cell) if cell.c == 'a');
+        assert_matches!(view2[[0, 7]], Some(cell) if cell.c == 'b');
+        assert_matches!(view2[[1, 0]], Some(cell) if cell.c == 'c');
+        assert_matches!(view2[[7, 7]], Some(cell) if cell.c == 'd');
+
+        assert!(view2.get([8, 8]).is_none());
+
+        assert_matches!(view[[1, 1]], Some(cell) if cell.c == 'a');
+        assert_matches!(view[[1, 8]], Some(cell) if cell.c == 'b');
+        assert_matches!(view[[2, 1]], Some(cell) if cell.c == 'c');
+        assert_matches!(view[[8, 8]], Some(cell) if cell.c == 'd');
+
+        assert_eq!(view.cursor(), Some([8, 8].into()));
     }
 }

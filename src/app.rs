@@ -1,7 +1,7 @@
 use std::io;
 use std::time::{Duration, Instant};
 
-use crate::buffer2::Buffer;
+use crate::buffer::Buffer;
 use crate::draw_buffer::draw_diff;
 use crate::platform::event::Events as _;
 use crate::platform::linux::LinuxTerminal;

@@ -1,4 +1,4 @@
-use crate::buffer2::BufferView;
+use crate::buffer::BufferView;
 use crate::callback::*;
 use crate::platform::event::Event;
 use crate::widget::{Context, Handled, Widget};

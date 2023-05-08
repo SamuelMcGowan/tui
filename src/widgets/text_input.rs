@@ -1,6 +1,6 @@
 use super::string_editor::TextEdit;
 use super::StringEditor;
-use crate::buffer2::{BufferView, Cell};
+use crate::buffer::{BufferView, Cell};
 use crate::callback::*;
 use crate::platform::event::*;
 use crate::style::Style;

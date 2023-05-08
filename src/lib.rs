@@ -1,6 +1,5 @@
 pub mod app;
-// pub mod buffer;
-pub mod buffer2;
+pub mod buffer;
 pub mod callback;
 pub mod platform;
 pub mod style;

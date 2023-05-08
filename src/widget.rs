@@ -1,6 +1,6 @@
 use std::collections::VecDeque;
 
-use crate::buffer2::BufferView;
+use crate::buffer::BufferView;
 use crate::platform::event::Event;
 
 #[must_use]

@@ -1,4 +1,4 @@
-use crate::buffer2::BufferView;
+use crate::buffer::BufferView;
 use crate::platform::Writer;
 use crate::style::Style;
 use crate::vec2::Vec2;
