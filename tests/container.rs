@@ -4,8 +4,12 @@ use tui::app::App;
 use tui::style::{Color, Style};
 use tui::widgets::*;
 
+mod logger;
+
 #[test]
 fn foo() {
+    logger::init_logger();
+
     let blue = Style {
         fg: Color::Blue,
         ..Default::default()
