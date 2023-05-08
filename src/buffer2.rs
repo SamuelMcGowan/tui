@@ -31,6 +31,22 @@ pub struct Buffer {
     cursor: Option<Vec2>,
 }
 
+impl Clone for Buffer {
+    fn clone(&self) -> Self {
+        Self {
+            buf: self.buf.clone(),
+            size: self.size,
+            cursor: self.cursor,
+        }
+    }
+
+    fn clone_from(&mut self, source: &Self) {
+        self.buf.clone_from(&source.buf);
+        self.size = source.size;
+        self.cursor = source.cursor;
+    }
+}
+
 impl Buffer {
     pub fn new(size: impl Into<Vec2>) -> Self {
         let size: Vec2 = size.into();
