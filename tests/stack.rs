@@ -2,16 +2,23 @@ use std::time::Duration;
 
 use tui::app::App;
 use tui::platform::event::{Event, KeyCode, KeyEvent, Modifiers};
+use tui::style::{Color, Style};
 use tui::widget::{Context, Handled};
 use tui::widgets::*;
 
 #[test]
 fn foo() {
     let mut vstack = VStack::new();
-    vstack.add_widget(TextInput::new(), SizeConstraint::fixed(10));
+    vstack.add_widget(
+        Label::new("Hello, World!").with_style(Style {
+            fg: Color::Cyan,
+            ..Default::default()
+        }),
+        SizeConstraint::fixed(1),
+    );
     vstack.add_widget(TextInput::new(), SizeConstraint::new().with_min(10));
     vstack.add_widget(TextInput::new(), SizeConstraint::new().with_max(20));
-    vstack.set_focus(Some(0));
+    vstack.set_focus(Some(1));
 
     let hooked = Hooked::new(vstack).event_hook(vsplit_focus_hook);
 
