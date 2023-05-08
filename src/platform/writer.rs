@@ -1,7 +1,7 @@
 use std::io;
 
-use super::TermPos;
 use crate::style::{Color, Weight};
+use crate::vec2::Vec2;
 
 pub trait Writer {
     fn flush(&mut self) -> io::Result<()>;
@@ -11,7 +11,7 @@ pub trait Writer {
     fn set_cursor_home(&mut self);
     fn next_line(&mut self);
 
-    fn set_cursor_pos(&mut self, pos: impl Into<TermPos>);
+    fn set_cursor_pos(&mut self, pos: impl Into<Vec2>);
     fn set_cursor_vis(&mut self, vis: bool);
 
     fn set_fg_color(&mut self, c: Color);

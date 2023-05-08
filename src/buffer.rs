@@ -1,7 +1,8 @@
 use std::ops::{Index, IndexMut};
 
-use crate::platform::{TermPos, TermSize, Writer};
+use crate::platform::Writer;
 use crate::style::Style;
+use crate::vec2::Vec2;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Cell {
@@ -28,8 +29,8 @@ impl Cell {
 pub struct Buffer {
     data: Vec<Option<Cell>>,
 
-    size: TermSize,
-    cursor: Option<TermPos>,
+    size: Vec2,
+    cursor: Option<Vec2>,
 }
 
 impl Clone for Buffer {
@@ -51,11 +52,11 @@ impl Clone for Buffer {
 }
 
 impl Buffer {
-    pub fn new(size: impl Into<TermSize>) -> Self {
+    pub fn new(size: impl Into<Vec2>) -> Self {
         Self::new_inner(size.into(), vec![])
     }
 
-    pub fn resize_and_clear(&mut self, size: impl Into<TermSize>) {
+    pub fn resize_and_clear(&mut self, size: impl Into<Vec2>) {
         let size = size.into();
 
         if size != self.size {
@@ -67,7 +68,7 @@ impl Buffer {
         }
     }
 
-    fn new_inner(size: TermSize, mut data: Vec<Option<Cell>>) -> Self {
+    fn new_inner(size: Vec2, mut data: Vec<Option<Cell>>) -> Self {
         data.clear();
         data.extend(std::iter::repeat(None).take(size.area()));
 
@@ -79,7 +80,7 @@ impl Buffer {
         }
     }
 
-    pub fn size(&self) -> TermSize {
+    pub fn size(&self) -> Vec2 {
         self.size
     }
 
@@ -87,46 +88,46 @@ impl Buffer {
         &self.data
     }
 
-    pub fn get(&self, index: impl Into<TermPos>) -> Option<&Option<Cell>> {
+    pub fn get(&self, index: impl Into<Vec2>) -> Option<&Option<Cell>> {
         self.data.get(self.index(index)?)
     }
 
-    pub fn get_mut(&mut self, index: impl Into<TermPos>) -> Option<&mut Option<Cell>> {
+    pub fn get_mut(&mut self, index: impl Into<Vec2>) -> Option<&mut Option<Cell>> {
         let index = self.index(index)?;
         self.data.get_mut(index)
     }
 
-    fn index(&self, pos: impl Into<TermPos>) -> Option<usize> {
+    fn index(&self, pos: impl Into<Vec2>) -> Option<usize> {
         let pos = pos.into();
 
-        if pos.x >= self.size.width || pos.y > self.size.height {
+        if pos.x >= self.size.x || pos.y > self.size.y {
             return None;
         }
 
-        let index = pos.y as usize * self.size.width as usize + pos.x as usize;
+        let index = pos.y as usize * self.size.x as usize + pos.x as usize;
 
         Some(index)
     }
 
-    pub fn set_cursor(&mut self, cursor: Option<impl Into<TermPos>>) {
+    pub fn set_cursor(&mut self, cursor: Option<impl Into<Vec2>>) {
         self.cursor = cursor.map(Into::into);
     }
 
-    pub fn cursor(&self) -> Option<TermPos> {
+    pub fn cursor(&self) -> Option<Vec2> {
         self.cursor
     }
 
     pub fn blit(
         &mut self,
-        offset: impl Into<TermPos>,
+        offset: impl Into<Vec2>,
         buf: &Buffer,
         override_cursor: bool,
         transparent: bool,
     ) {
         let offset = offset.into();
 
-        for (x, buf_x) in (offset.x..self.size.width).zip(0..buf.size.width) {
-            for (y, buf_y) in (offset.y..self.size.height).zip(0..buf.size.height) {
+        for (x, buf_x) in (offset.x..self.size.x).zip(0..buf.size.x) {
+            for (y, buf_y) in (offset.y..self.size.y).zip(0..buf.size.y) {
                 let clear = if transparent { self[[x, y]] } else { None };
 
                 self[[x, y]] = buf[[buf_x, buf_y]].or(clear);
@@ -134,12 +135,12 @@ impl Buffer {
         }
 
         if override_cursor {
-            self.cursor = buf.cursor.map(|pos| pos.offset(offset));
+            self.cursor = buf.cursor.map(|pos| pos + offset);
         }
     }
 }
 
-impl<I: Into<TermPos>> Index<I> for Buffer {
+impl<I: Into<Vec2>> Index<I> for Buffer {
     type Output = Option<Cell>;
 
     fn index(&self, index: I) -> &Self::Output {
@@ -147,7 +148,7 @@ impl<I: Into<TermPos>> Index<I> for Buffer {
     }
 }
 
-impl<I: Into<TermPos>> IndexMut<I> for Buffer {
+impl<I: Into<Vec2>> IndexMut<I> for Buffer {
     fn index_mut(&mut self, index: I) -> &mut Self::Output {
         self.get_mut(index).expect("out of bounds")
     }
@@ -161,11 +162,11 @@ pub fn draw_diff(old: &Buffer, new: &Buffer, w: &mut impl Writer) {
 
     w.set_cursor_home();
 
-    let mut cursor_pos = TermPos::from([0, 0]);
+    let mut cursor_pos = Vec2::from([0, 0]);
     let mut style = Style::default();
 
-    for y in 0..new.size().height {
-        for x in 0..new.size().width {
+    for y in 0..new.size.y {
+        for x in 0..new.size.x {
             let old_cell = old[[x, y]];
             let new_cell = new[[x, y]];
 
@@ -178,7 +179,7 @@ pub fn draw_diff(old: &Buffer, new: &Buffer, w: &mut impl Writer) {
             draw_style_diff(style, cell.style, w);
             style = cell.style;
 
-            let cell_pos = TermPos::from([x, y]);
+            let cell_pos = Vec2::from([x, y]);
             if cell_pos != cursor_pos {
                 w.set_cursor_pos(cell_pos);
                 cursor_pos = cell_pos;
@@ -213,9 +214,9 @@ fn draw_no_diff(buf: &Buffer, w: &mut impl Writer) {
 
     let mut style = Style::default();
 
-    for y in 0..buf.size.height {
+    for y in 0..buf.size.y {
         w.set_cursor_pos([0, y]);
-        for x in 0..buf.size.width {
+        for x in 0..buf.size.x {
             let Some(cell) = buf[[x, y]] else {
                 continue;
             };

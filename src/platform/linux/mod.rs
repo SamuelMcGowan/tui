@@ -1,13 +1,13 @@
 mod raw_term;
 
-use std::io::{self};
+use std::io;
 
 use raw_term::RawTerm;
 
 use super::ansi::AnsiWriter;
 use super::ansi_event::AnsiEvents;
 use super::{Terminal, Writer};
-use crate::platform::TermSize;
+use crate::vec2::Vec2;
 
 pub struct LinuxTerminal {
     raw_term: AnsiWriter<RawTerm>,
@@ -30,7 +30,7 @@ impl Terminal for LinuxTerminal {
         Ok(term)
     }
 
-    fn size(&self) -> io::Result<TermSize> {
+    fn size(&self) -> io::Result<Vec2> {
         self.raw_term.inner().get_size()
     }
 

@@ -183,20 +183,20 @@ impl<State, Msg> Widget<State, Msg> for Stack<Vertical, State, Msg> {
 
     fn render(&mut self, buf: &mut Buffer) {
         let size = buf.size();
-        self.allocate_space(size.height);
+        self.allocate_space(size.y);
 
         let mut offset_y = 0;
         for (i, element) in self.elements.iter_mut().enumerate() {
             // This is dumb.
             let focused = self.focused == Some(i);
 
-            element.buf.resize_and_clear([size.width, element.size]);
+            element.buf.resize_and_clear([size.x, element.size]);
             element.widget.render(&mut element.buf);
 
             buf.blit([0, offset_y], &element.buf, focused, false);
 
             offset_y += element.size;
-            if offset_y >= size.height {
+            if offset_y >= size.y {
                 break;
             }
         }
@@ -218,20 +218,20 @@ impl<State, Msg> Widget<State, Msg> for Stack<Horizontal, State, Msg> {
 
     fn render(&mut self, buf: &mut Buffer) {
         let size = buf.size();
-        self.allocate_space(size.width);
+        self.allocate_space(size.x);
 
         let mut offset_x = 0;
         for (i, element) in self.elements.iter_mut().enumerate() {
             // Still dumb.
             let focused = self.focused == Some(i);
 
-            element.buf.resize_and_clear([element.size, size.height]);
+            element.buf.resize_and_clear([element.size, size.y]);
             element.widget.render(&mut element.buf);
 
             buf.blit([offset_x, 0], &element.buf, focused, false);
 
             offset_x += element.size;
-            if offset_x >= size.width {
+            if offset_x >= size.x {
                 break;
             }
         }

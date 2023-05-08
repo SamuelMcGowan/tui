@@ -78,13 +78,13 @@ impl<State, Msg> Widget<State, Msg> for TextInput<State, Msg> {
             .as_str()
             .chars()
             .enumerate()
-            .take(size.width as usize)
+            .take(size.x as usize)
         {
             buf[[x as u16, 0]] = Some(Cell::new(c, self.state.style));
         }
 
         let cursor_x = self.state.text.cursor_pos_chars();
-        if cursor_x < size.width as usize {
+        if cursor_x < size.x as usize {
             buf.set_cursor(Some([cursor_x as u16, 0]));
         }
     }

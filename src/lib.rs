@@ -6,3 +6,4 @@ pub mod widget;
 pub mod widgets;
 
 pub mod platform;
+pub mod vec2;

@@ -1,8 +1,9 @@
 use std::fmt::Write as _;
 use std::io::{self, Write};
 
-use super::{TermPos, Writer};
+use super::Writer;
 use crate::style::{Color, Weight};
+use crate::vec2::Vec2;
 
 const CSI: &str = "\x1b[";
 
@@ -46,7 +47,7 @@ impl<W: Write> Writer for AnsiWriter<W> {
         write!(self.buf, "{CSI}H").unwrap();
     }
 
-    fn set_cursor_pos(&mut self, pos: impl Into<TermPos>) {
+    fn set_cursor_pos(&mut self, pos: impl Into<Vec2>) {
         let pos = pos.into();
 
         let row = pos.y.saturating_add(1);
