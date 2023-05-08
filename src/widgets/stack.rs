@@ -102,6 +102,10 @@ impl<Flow, State, Msg> Stack<Flow, State, Msg> {
     }
 
     fn allocate_space(&mut self, available: u16) {
+        if self.elements.is_empty() {
+            return;
+        }
+
         let min_required = self.allocate_min();
         if min_required < available {
             let available = self.allocate_max(available, min_required);
