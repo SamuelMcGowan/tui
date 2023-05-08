@@ -14,14 +14,14 @@ pub struct TextInputState {
 
 pub struct TextInput<State, Msg> {
     state: TextInputState,
-    on_enter: BoxedCallback<State, Msg, TextInputState>,
+    on_enter: Callback<State, Msg, TextInputState>,
 }
 
 impl<State, Msg> Default for TextInput<State, Msg> {
     fn default() -> Self {
         Self {
             state: TextInputState::default(),
-            on_enter: DummyCallback.boxed(),
+            on_enter: Callback::dummy(),
         }
     }
 }
@@ -41,11 +41,8 @@ impl<State, Msg> TextInput<State, Msg> {
         self
     }
 
-    pub fn on_enter(
-        mut self,
-        callback: impl Callback<State, Msg, TextInputState> + 'static,
-    ) -> Self {
-        self.on_enter = Box::new(callback);
+    pub fn on_enter(mut self, callback: Callback<State, Msg, TextInputState>) -> Self {
+        self.on_enter = callback;
         self
     }
 }

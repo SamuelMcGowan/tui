@@ -31,26 +31,32 @@ pub struct Style {
 }
 
 impl Style {
-    pub fn new() -> Self {
-        Self::default()
+    pub const fn new() -> Self {
+        Self {
+            fg: Color::Default,
+            bg: Color::Default,
+
+            weight: Weight::Normal,
+            underline: false,
+        }
     }
 
-    pub fn with_fg(mut self, fg: Color) -> Self {
+    pub const fn with_fg(mut self, fg: Color) -> Self {
         self.fg = fg;
         self
     }
 
-    pub fn with_bg(mut self, bg: Color) -> Self {
+    pub const fn with_bg(mut self, bg: Color) -> Self {
         self.bg = bg;
         self
     }
 
-    pub fn with_weight(mut self, weight: Weight) -> Self {
+    pub const fn with_weight(mut self, weight: Weight) -> Self {
         self.weight = weight;
         self
     }
 
-    pub fn with_underline(mut self, underline: bool) -> Self {
+    pub const fn with_underline(mut self, underline: bool) -> Self {
         self.underline = underline;
         self
     }

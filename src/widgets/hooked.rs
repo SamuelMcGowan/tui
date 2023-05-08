@@ -6,10 +6,10 @@ use crate::widget::{Context, Handled, Widget};
 pub struct Hooked<State, Msg, W: Widget<State, Msg>> {
     widget: W,
 
-    event_hook: BoxedEventHook<State, Msg, W>,
-    msg_hook: BoxedMsgHook<State, Msg, W>,
+    event_hook: EventHook<State, Msg, W>,
+    msg_hook: MsgHook<State, Msg, W>,
 
-    update_hook: BoxedCallback<State, Msg, W>,
+    update_hook: Callback<State, Msg, W>,
 }
 
 impl<State, Msg, W: Widget<State, Msg>> Hooked<State, Msg, W> {
@@ -17,25 +17,25 @@ impl<State, Msg, W: Widget<State, Msg>> Hooked<State, Msg, W> {
         Self {
             widget,
 
-            event_hook: DummyEventHook.boxed(),
-            msg_hook: DummyMsgHook.boxed(),
+            event_hook: EventHook::dummy(),
+            msg_hook: MsgHook::dummy(),
 
-            update_hook: DummyCallback.boxed(),
+            update_hook: Callback::dummy(),
         }
     }
 
-    pub fn event_hook(mut self, hook: impl EventHook<State, Msg, W> + 'static) -> Self {
-        self.event_hook = hook.boxed();
+    pub fn event_hook(mut self, hook: EventHook<State, Msg, W>) -> Self {
+        self.event_hook = hook;
         self
     }
 
-    pub fn msg_hook(mut self, hook: impl MsgHook<State, Msg, W> + 'static) -> Self {
-        self.msg_hook = hook.boxed();
+    pub fn msg_hook(mut self, hook: MsgHook<State, Msg, W>) -> Self {
+        self.msg_hook = hook;
         self
     }
 
-    pub fn update_hook(mut self, hook: impl Callback<State, Msg, W> + 'static) -> Self {
-        self.update_hook = hook.boxed();
+    pub fn update_hook(mut self, hook: Callback<State, Msg, W>) -> Self {
+        self.update_hook = hook;
         self
     }
 }

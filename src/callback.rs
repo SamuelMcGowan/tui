@@ -1,48 +1,36 @@
-use paste::paste;
-
 use crate::platform::event::Event;
 use crate::widget::{Context, Handled};
 
 macro_rules! callback_type {
     ($(#[$m:meta])* $name:ident $(<$($ty_param:ident),+>)? ($($arg:ident : $arg_ty:ty),*) -> $ret_ty:ty ) => {
-        $(#[$m])*
-        pub trait $name $(<$($ty_param),*>)? {
-            /// Invoke the callback.
-            fn call(&mut self, $($arg: $arg_ty),*) -> $ret_ty;
+        #[allow(clippy::unused_unit)]
+        pub struct $name $(<$($ty_param),*>)? {
+            callback: Box<dyn FnMut($($arg_ty),*) -> $ret_ty>
+        }
 
-            paste!{
-                /// Box this callback.
-                fn boxed(self) -> [<Boxed $name>] $(<$($ty_param),*>)?
-                    where Self: Sized + 'static
-                {
-                    Box::new(self)
+        #[automatically_derived]
+        #[allow(clippy::unused_unit)]
+        impl<$($($ty_param),*)?> $name $(<$($ty_param),*>)? {
+            pub fn new<F: FnMut($($arg_ty),*) -> $ret_ty + 'static>(f: F) -> Self {
+                Self {
+                    callback: Box::new(f),
                 }
             }
         }
 
         #[automatically_derived]
+        #[allow(unused_variables)]
         #[allow(clippy::unused_unit)]
-        impl<F, $($($ty_param),*)?> $name $(<$($ty_param),*>)? for F where F: FnMut($($arg_ty),*) -> $ret_ty {
-            fn call(&mut self, $($arg: $arg_ty),*) -> $ret_ty {
-                self($($arg),*)
-            }
-        }
-
-        paste! {
-            /// Dummy implementation of this trait.
-            pub struct [< Dummy $name >];
-
-            #[automatically_derived]
-            impl$(<$($ty_param),*>)? $name $(<$($ty_param),*>)? for [< Dummy $name >] {
-                fn call(&mut self, $($arg: $arg_ty),*) -> $ret_ty {
-                    <$ret_ty>::default()
+        impl $(<$($ty_param),*>)? $name $(<$($ty_param),*>)? {
+            pub fn dummy() -> Self {
+                Self {
+                    callback: Box::new(|$($arg),*| <$ret_ty>::default())
                 }
             }
-        }
 
-        paste! {
-            /// A boxed trait object for the corresponding trait.
-            pub type [< Boxed $name >] $(<$($ty_param),*>)? = Box<dyn $name $(<$($ty_param),*>)?>;
+            pub fn call(&mut self, $($arg: $arg_ty),*) -> $ret_ty {
+                (self.callback)($($arg),*)
+            }
         }
     };
 }
