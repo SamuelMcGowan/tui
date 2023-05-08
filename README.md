@@ -18,8 +18,6 @@ You should probably just use [tui-rs](https://github.com/fdehau/tui-rs).
 
 ### Bugs
 
-- Cursor missing in stack example.
-
 ### Widgets
 
 - Overlap

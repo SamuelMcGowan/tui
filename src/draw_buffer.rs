@@ -43,17 +43,13 @@ pub fn draw_diff(old: &BufferView, new: &BufferView, w: &mut impl Writer) {
         }
     }
 
-    match (old.cursor(), new.cursor()) {
-        (None, None) => {}
-        (None, Some(pos)) => {
+    match new.cursor() {
+        Some(pos) => {
             w.set_cursor_pos(pos);
             w.set_cursor_vis(true);
         }
-        (Some(_), None) => {
+        None => {
             w.set_cursor_vis(false);
-        }
-        (Some(_), Some(new)) => {
-            w.set_cursor_pos(new);
         }
     }
 }
