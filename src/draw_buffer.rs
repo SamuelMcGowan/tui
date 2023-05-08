@@ -67,18 +67,26 @@ fn draw_no_diff(buf: &BufferView, w: &mut impl Writer) {
     let mut style = Style::default();
     draw_style(style, w);
 
+    let mut pos_dirty = false;
+
     for y in 0..buf.size().y {
-        w.set_cursor_pos([0, y]);
         for x in 0..buf.size().x {
             let Some(cell) = buf[[x, y]] else {
+                pos_dirty = true;
                 continue;
             };
+
+            if pos_dirty {
+                w.set_cursor_pos([x, y]);
+            }
 
             draw_style_diff(style, cell.style, w);
             style = cell.style;
 
             w.write_char(cell.c);
         }
+
+        pos_dirty = true;
     }
 
     match buf.cursor() {
