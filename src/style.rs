@@ -29,3 +29,29 @@ pub struct Style {
     pub weight: Weight,
     pub underline: bool,
 }
+
+impl Style {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    pub fn with_fg(mut self, fg: Color) -> Self {
+        self.fg = fg;
+        self
+    }
+
+    pub fn with_bg(mut self, bg: Color) -> Self {
+        self.bg = bg;
+        self
+    }
+
+    pub fn with_weight(mut self, weight: Weight) -> Self {
+        self.weight = weight;
+        self
+    }
+
+    pub fn with_underline(mut self, underline: bool) -> Self {
+        self.underline = underline;
+        self
+    }
+}
