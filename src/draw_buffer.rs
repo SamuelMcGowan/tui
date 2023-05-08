@@ -10,6 +10,7 @@ pub fn draw_diff(old: &BufferView, new: &BufferView, w: &mut impl Writer) {
     }
 
     w.set_cursor_home();
+    w.set_cursor_vis(false);
 
     let mut cursor_pos = Vec2::from([0, 0]);
     let mut style = Style::default();
