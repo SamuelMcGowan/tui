@@ -10,7 +10,6 @@ bitflags = "2.2.1"
 crossbeam-channel = "0.5.8"
 libc = "0.2.142"
 log = "0.4.17"
-paste = "1.0.12"
 
 [dev-dependencies]
 fern = "0.6.2"
