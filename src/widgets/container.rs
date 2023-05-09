@@ -49,8 +49,8 @@ impl BorderKind {
 }
 
 pub struct Container<State, Msg> {
-    widget: BoxedWidget<State, Msg>,
-    border: Option<(BorderKind, Style)>,
+    pub widget: BoxedWidget<State, Msg>,
+    pub border: Option<(BorderKind, Style)>,
 }
 
 impl<State, Msg> Container<State, Msg> {
