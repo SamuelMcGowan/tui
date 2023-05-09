@@ -13,11 +13,12 @@ mod draw_buffer;
 
 pub mod prelude {
     pub use crate::platform::event::*;
-    pub use crate::style::Style;
+    pub use crate::style::*;
+    pub use crate::vec2::Vec2;
     pub use crate::widget::Handled;
     pub use crate::widget2::app::*;
     pub use crate::widget2::widget::*;
     //
-    pub use crate::widgets2::container::{Container, LineStyle};
+    pub use crate::widgets2::container::Container;
     pub use crate::widgets2::label::Label;
 }

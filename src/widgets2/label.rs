@@ -1,6 +1,5 @@
 use crate::buffer::Cell;
-use crate::style::Style;
-use crate::widget2::widget::View;
+use crate::prelude::*;
 
 #[derive(Default)]
 pub struct Label {

@@ -61,3 +61,9 @@ impl Style {
         self
     }
 }
+
+#[derive(Default, Debug, Clone, Copy)]
+pub enum LineStyle {
+    #[default]
+    Line,
+}

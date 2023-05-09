@@ -1,16 +1,5 @@
 use crate::buffer::Cell;
-use crate::platform::event::Event;
-use crate::style::Style;
-use crate::vec2::Vec2;
-use crate::widget::Handled;
-use crate::widget2::app::Context;
-use crate::widget2::widget::View;
-
-#[derive(Default, Debug, Clone, Copy)]
-pub enum LineStyle {
-    #[default]
-    Line,
-}
+use crate::prelude::*;
 
 impl LineStyle {
     fn h(&self) -> char {
