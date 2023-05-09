@@ -18,7 +18,5 @@ pub mod prelude {
     pub use crate::widget::Handled;
     pub use crate::widget2::app::*;
     pub use crate::widget2::widget::*;
-    //
-    pub use crate::widgets2::container::Container;
-    pub use crate::widgets2::label::Label;
+    pub use crate::widgets2::*;
 }
