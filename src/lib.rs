@@ -8,3 +8,4 @@ pub mod widget;
 pub mod widgets;
 
 mod draw_buffer;
+pub mod widget2;
