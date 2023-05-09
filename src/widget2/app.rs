@@ -1,3 +1,4 @@
+use std::collections::VecDeque;
 use std::io;
 use std::time::{Duration, Instant};
 
@@ -8,6 +9,12 @@ use crate::platform::event::Events;
 use crate::platform::linux::LinuxTerminal;
 use crate::platform::{Terminal, Writer};
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ShouldQuit {
+    Yes,
+    No,
+}
+
 pub struct App<W: Widget> {
     root: W,
 
@@ -16,16 +23,25 @@ pub struct App<W: Widget> {
 
     term: LinuxTerminal,
 
+    context: Context<W::Msg>,
+
     refresh_rate: Duration,
 }
 
 impl<W: Widget> App<W> {
-    pub fn frame(&mut self) -> io::Result<()> {
+    pub fn run(mut self) -> io::Result<()> {
+        while let ShouldQuit::No = self.frame()? {}
+        Ok(())
+    }
+
+    pub fn frame(&mut self) -> io::Result<ShouldQuit> {
         // Work out how long we have.
         let time = Instant::now();
         let deadline = time
             .checked_add(self.refresh_rate)
             .expect("deadline overflowed");
+
+        self.root.update();
 
         // Build widget view.
         let mut widget_with_view = self.root.build();
@@ -33,12 +49,14 @@ impl<W: Widget> App<W> {
         // Process events and propagate them through the view tree.
         let events = self.term.events();
         while let Some(event) = events.read_with_deadline(deadline)? {
-            let _ = widget_with_view.on_event(&event);
+            let _ = widget_with_view.propagate_event(&mut self.context, &event);
         }
 
-        // Do message stuff here?
-
-        // Check whether we should quit here.
+        // Propagate messages.
+        let messages = std::mem::take(&mut self.context.messages);
+        for message in messages {
+            let _ = widget_with_view.widget.propagate_msg(&mut self.context, message);
+        }
 
         render(
             &mut self.root_buf_prev,
@@ -47,14 +65,17 @@ impl<W: Widget> App<W> {
             &mut self.term,
         )?;
 
-        Ok(())
+        Ok(match self.context.quit {
+            true => ShouldQuit::Yes,
+            false => ShouldQuit::No,
+        })
     }
 }
 
-fn render(
+fn render<Msg>(
     buf_old: &mut Buffer,
     buf_new: &mut Buffer,
-    view: impl View,
+    view: impl View<Msg>,
     term: &mut LinuxTerminal,
 ) -> io::Result<()> {
     // Resize buffer.
@@ -74,4 +95,9 @@ fn render(
     buf_old.clone_from(buf_new);
 
     term.writer().flush()
+}
+
+pub struct Context<Msg> {
+    messages: VecDeque<Msg>,
+    quit: bool,
 }
