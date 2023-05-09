@@ -9,7 +9,7 @@ use crate::platform::linux::LinuxTerminal;
 use crate::platform::{Terminal, Writer};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum ShouldQuit {
+enum ShouldQuit {
     Yes,
     No,
 }

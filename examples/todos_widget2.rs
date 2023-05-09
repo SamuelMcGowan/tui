@@ -1,10 +1,4 @@
-use tui::platform::event::{Event, KeyCode, KeyEvent, Modifiers};
-use tui::style::Style;
-use tui::widget::Handled;
-use tui::widget2::app::{App, Context};
-use tui::widget2::widget::{View, Widget, WidgetWithView};
-use tui::widgets2::container::{Container, LineStyle};
-use tui::widgets2::label::Label;
+use tui::prelude::*;
 
 fn main() {
     let mut root = MyApp { s: String::new() };
