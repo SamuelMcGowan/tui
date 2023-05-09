@@ -35,20 +35,3 @@ impl<'a, W: Widget> View for WidgetWithView<'a, W> {
         self.view.render(buf);
     }
 }
-
-pub struct App<W: Widget> {
-    widget: W,
-}
-
-impl<W: Widget> App<W> {
-    pub fn frame(&mut self) {
-        let mut widget_with_view = self.widget.build();
-
-        let event = next_event();
-        let _ = widget_with_view.on_event(&event);
-    }
-}
-
-fn next_event() -> Event {
-    todo!()
-}
