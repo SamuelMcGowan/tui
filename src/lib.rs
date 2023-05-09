@@ -15,8 +15,7 @@ pub mod prelude {
     pub use crate::platform::event::*;
     pub use crate::style::*;
     pub use crate::vec2::Vec2;
-    pub use crate::widget::Handled;
     pub use crate::widget2::app::*;
-    pub use crate::widget2::widget::*;
+    pub use crate::widget2::widget::{Handled, *};
     pub use crate::widgets2::*;
 }

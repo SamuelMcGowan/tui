@@ -3,7 +3,14 @@ use std::ops::DerefMut;
 use super::app::Context;
 use crate::buffer::BufferView;
 use crate::platform::event::Event;
-use crate::widget::Handled;
+
+#[must_use]
+#[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Handled {
+    Yes,
+    #[default]
+    No,
+}
 
 pub trait View<Msg> {
     fn propagate_event(&mut self, _ctx: &mut Context<Msg>, _event: &Event) -> Handled {

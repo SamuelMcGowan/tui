@@ -1,5 +1,4 @@
-use crate::platform::event::{Event, KeyCode, KeyEvent};
-use crate::widget::Handled;
+use crate::prelude::*;
 
 /// A string-based text buffer for small texts.
 ///
