@@ -58,7 +58,7 @@ fn todo_list() -> impl Widget<(), Message> {
 
 fn text_input() -> impl Widget<(), Message> {
     TextInput::new().on_enter(Callback::new(|ctx, widget: &mut TextInputState| {
-        let s = widget.text.as_str().to_owned();
+        let s = widget.text.as_str().trim().to_owned();
 
         if s.is_empty() {
             return;
