@@ -9,3 +9,4 @@ pub mod widgets;
 
 mod draw_buffer;
 pub mod widget2;
+pub mod widgets2;
