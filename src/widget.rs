@@ -1,5 +1,6 @@
-use std::collections::VecDeque;
+use std::ops::DerefMut;
 
+use super::app::Context;
 use crate::buffer::BufferView;
 use crate::platform::event::Event;
 
@@ -11,53 +12,61 @@ pub enum Handled {
     No,
 }
 
-pub trait Widget<State, Msg> {
-    #[allow(unused_variables)]
-    fn handle_event(&mut self, ctx: &mut Context<State, Msg>, event: &Event) -> Handled {
+pub trait View<Msg> {
+    fn propagate_event(&mut self, _ctx: &mut Context<Msg>, _event: &Event) -> Handled {
         Handled::No
     }
-
-    #[allow(unused_variables)]
-    fn handle_msg(&mut self, ctx: &mut Context<State, Msg>, msg: &Msg) -> Handled {
-        Handled::No
-    }
-
-    #[allow(unused_variables)]
-    fn update(&mut self, ctx: &mut Context<State, Msg>) {}
 
     fn render(&mut self, buf: &mut BufferView);
 }
 
-pub type BoxedWidget<State, Msg> = Box<dyn Widget<State, Msg>>;
+impl<T: DerefMut<Target = V>, V: View<Msg> + ?Sized, Msg> View<Msg> for T {
+    fn propagate_event(&mut self, ctx: &mut Context<Msg>, event: &Event) -> Handled {
+        self.deref_mut().propagate_event(ctx, event)
+    }
 
-pub struct ContextOwned<State, Msg> {
-    pub state: State,
-    pub messages: VecDeque<Msg>,
-    pub should_quit: bool,
+    fn render(&mut self, buf: &mut BufferView) {
+        self.deref_mut().render(buf)
+    }
 }
 
-impl<State, Msg> ContextOwned<State, Msg> {
-    pub fn new(state: State) -> Self {
-        Self {
-            state,
-            messages: VecDeque::new(),
-            should_quit: false,
+pub trait Widget: Sized {
+    type View: View<Self::Msg>;
+    type Msg;
+
+    fn on_event(&mut self, _ctx: &mut Context<Self::Msg>, _event: &Event) -> Handled {
+        Handled::No
+    }
+
+    fn propagate_msg(&mut self, _ctx: &mut Context<Self::Msg>, _msg: Self::Msg) -> Handled {
+        Handled::No
+    }
+
+    fn update(&mut self) {}
+
+    fn build(&mut self) -> WidgetWithView<Self>;
+}
+
+pub struct WidgetWithView<'a, W: Widget> {
+    pub(super) widget: &'a mut W,
+    view: W::View,
+}
+
+impl<'a, W: Widget> WidgetWithView<'a, W> {
+    pub fn new(widget: &'a mut W, view: W::View) -> Self {
+        Self { widget, view }
+    }
+}
+
+impl<'a, W: Widget> View<W::Msg> for WidgetWithView<'a, W> {
+    fn propagate_event(&mut self, ctx: &mut Context<W::Msg>, event: &Event) -> Handled {
+        match self.view.propagate_event(ctx, event) {
+            Handled::Yes => Handled::Yes,
+            Handled::No => self.widget.on_event(ctx, event),
         }
     }
 
-    pub fn borrow(&mut self) -> Context<State, Msg> {
-        Context(self)
-    }
-}
-
-pub struct Context<'a, State, Msg>(&'a mut ContextOwned<State, Msg>);
-
-impl<State, Msg> Context<'_, State, Msg> {
-    pub fn write_msg(&mut self, message: Msg) {
-        self.0.messages.push_back(message);
-    }
-
-    pub fn quit(&mut self) {
-        self.0.should_quit = true;
+    fn render(&mut self, buf: &mut BufferView) {
+        self.view.render(buf);
     }
 }

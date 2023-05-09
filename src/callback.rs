@@ -1,6 +1,3 @@
-use crate::platform::event::Event;
-use crate::widget::{Context, Handled};
-
 macro_rules! callback_type {
     ($(#[$m:meta])* $name:ident $(<$($ty_param:ident),+>)? ($($arg:ident : $arg_ty:ty),*) -> $ret_ty:ty ) => {
         #[allow(clippy::unused_unit)]
@@ -33,25 +30,4 @@ macro_rules! callback_type {
             }
         }
     };
-}
-
-callback_type! {
-    /// A generic callback.
-    Callback<State, Msg, WidgetState>
-    (ctx: &mut Context<State, Msg>, widget: &mut WidgetState)
-    -> ()
-}
-
-callback_type! {
-    /// A hook called before a widget processes an event.
-    EventHook<State, Msg, WidgetState>
-    (ctx: &mut Context<State, Msg>, widget: &mut WidgetState, event: &Event)
-    -> Handled
-}
-
-callback_type! {
-    /// A hook called before a widget processes a message.
-    MsgHook<State, Msg, WidgetState>
-    (ctx: &mut Context<State, Msg>, widget: &mut WidgetState, event: &Msg)
-    -> Handled
 }

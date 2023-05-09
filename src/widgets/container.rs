@@ -1,16 +1,7 @@
-use crate::buffer::{BufferView, Cell};
-use crate::platform::event::Event;
-use crate::style::Style;
-use crate::vec2::Vec2;
-use crate::widget::{BoxedWidget, Context, Handled, Widget};
+use crate::buffer::Cell;
+use crate::prelude::*;
 
-#[derive(Default, Debug, Clone, Copy)]
-pub enum BorderKind {
-    #[default]
-    Line,
-}
-
-impl BorderKind {
+impl LineStyle {
     fn h(&self) -> char {
         match self {
             Self::Line => '─',
@@ -48,41 +39,33 @@ impl BorderKind {
     }
 }
 
-pub struct Container<State, Msg> {
-    pub widget: BoxedWidget<State, Msg>,
-    pub border: Option<(BorderKind, Style)>,
+pub struct Container<Msg> {
+    pub view: Box<dyn View<Msg>>,
+    pub border: Option<(LineStyle, Style)>,
 }
 
-impl<State, Msg> Container<State, Msg> {
-    pub fn new(widget: impl Widget<State, Msg> + 'static) -> Self {
+impl<Msg> Container<Msg> {
+    pub fn new(view: impl View<Msg> + 'static) -> Self {
         Self {
-            widget: Box::new(widget),
+            view: Box::new(view),
             border: None,
         }
     }
 
-    pub fn with_border(mut self, kind: BorderKind, style: Style) -> Self {
-        self.border = Some((kind, style));
+    pub fn with_border(mut self, line: LineStyle, style: Style) -> Self {
+        self.border = Some((line, style));
         self
     }
 }
 
-impl<State, Msg> Widget<State, Msg> for Container<State, Msg> {
-    fn handle_event(&mut self, ctx: &mut Context<State, Msg>, event: &Event) -> Handled {
-        self.widget.handle_event(ctx, event)
+impl<Msg> View<Msg> for Container<Msg> {
+    fn propagate_event(&mut self, ctx: &mut Context<Msg>, event: &Event) -> Handled {
+        self.view.propagate_event(ctx, event)
     }
 
-    fn handle_msg(&mut self, ctx: &mut Context<State, Msg>, msg: &Msg) -> Handled {
-        self.widget.handle_msg(ctx, msg)
-    }
-
-    fn update(&mut self, ctx: &mut Context<State, Msg>) {
-        self.widget.update(ctx)
-    }
-
-    fn render(&mut self, buf: &mut BufferView) {
+    fn render(&mut self, buf: &mut crate::buffer::BufferView) {
         match self.border {
-            None => self.widget.render(buf),
+            None => self.view.render(buf),
             Some((kind, style)) => {
                 let Vec2 { x: w, y: h } = buf.size();
 
@@ -91,7 +74,7 @@ impl<State, Msg> Widget<State, Msg> for Container<State, Msg> {
                 }
 
                 let mut widget_buf_view = buf.view([1, 1], [w - 1, h - 1], true);
-                self.widget.render(&mut widget_buf_view);
+                self.view.render(&mut widget_buf_view);
 
                 for x in 1..(w - 1) {
                     buf[[x, 0]] = Some(Cell::new(kind.h(), style));

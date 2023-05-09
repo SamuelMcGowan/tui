@@ -1,50 +1,57 @@
-use std::marker::PhantomData;
-
 use crate::buffer::BufferView;
-use crate::platform::event::Event;
-use crate::widget::{BoxedWidget, Context, Handled, Widget};
+use crate::prelude::*;
 
-pub struct Horizontal;
-pub struct Vertical;
-
-pub type VStack<State, Msg> = Stack<Vertical, State, Msg>;
-pub type HStack<State, Msg> = Stack<Horizontal, State, Msg>;
-
-pub struct Stack<Flow, State, Msg> {
-    elements: Vec<StackElement<State, Msg>>,
-    focused: Option<usize>,
-    _phantom: PhantomData<Flow>,
+pub enum Direction {
+    Right,
+    Down,
 }
 
-impl<Flow, State, Msg> Default for Stack<Flow, State, Msg> {
+pub struct Stack<Msg> {
+    elements: Vec<StackElement<Msg>>,
+    focused: Option<usize>,
+    direction: Direction,
+}
+
+struct StackElement<Msg> {
+    view: Box<dyn View<Msg>>,
+    constraint: SizeConstraint,
+    size: u16,
+}
+
+#[derive(Default, Clone, Copy)]
+pub struct SizeConstraint {
+    pub min: Option<u16>,
+    pub max: Option<u16>,
+}
+
+impl<Msg> Default for Stack<Msg> {
     fn default() -> Self {
         Self {
             elements: vec![],
             focused: None,
-            _phantom: PhantomData,
+            direction: Direction::Down,
         }
     }
 }
 
-impl<Flow, State, Msg> Stack<Flow, State, Msg> {
-    pub fn new() -> Self {
-        Self::default()
+impl<Msg> View<Msg> for Stack<Msg> {
+    fn propagate_event(&mut self, ctx: &mut Context<Msg>, event: &Event) -> Handled {
+        if let Some(focused) = self.focused() {
+            focused.view.propagate_event(ctx, event)
+        } else {
+            Handled::No
+        }
+    }
+
+    fn render(&mut self, buf: &mut BufferView) {
+        match self.direction {
+            Direction::Down => self.render_down(buf),
+            Direction::Right => self.render_right(buf),
+        }
     }
 }
 
-impl<Flow, State, Msg> Stack<Flow, State, Msg> {
-    pub fn add_widget(
-        &mut self,
-        widget: impl Widget<State, Msg> + 'static,
-        constraint: SizeConstraint,
-    ) {
-        self.elements.push(StackElement {
-            widget: Box::new(widget),
-            constraint,
-            size: 0,
-        });
-    }
-
+impl<Msg> Stack<Msg> {
     pub fn set_focus(&mut self, focused: Option<usize>) {
         self.focused = match focused {
             Some(idx) if idx < self.elements.len() => Some(idx),
@@ -52,53 +59,8 @@ impl<Flow, State, Msg> Stack<Flow, State, Msg> {
         }
     }
 
-    pub fn focus_next(&mut self) {
-        // `focused` will only be `Some` when there is at least one element, so the
-        // subtraction can't underFlow.
-        self.focused = self
-            .focused
-            .map(|idx| idx.saturating_add(1).min(self.elements.len() - 1))
-    }
-
-    pub fn focus_prev(&mut self) {
-        self.focused = self.focused.map(|idx| idx.saturating_sub(1))
-    }
-
-    pub fn focused(&self) -> Option<&dyn Widget<State, Msg>> {
-        self.focused.map(|idx| self.elements[idx].widget.as_ref())
-    }
-
-    pub fn focused_mut(&mut self) -> Option<&mut StackElement<State, Msg>> {
+    fn focused(&mut self) -> Option<&mut StackElement<Msg>> {
         self.focused.map(|idx| &mut self.elements[idx])
-    }
-
-    pub fn as_slice(&self) -> &[StackElement<State, Msg>] {
-        &self.elements
-    }
-
-    pub fn as_slice_mut(&mut self) -> &mut [StackElement<State, Msg>] {
-        &mut self.elements
-    }
-
-    fn handle_event(&mut self, ctx: &mut Context<State, Msg>, event: &Event) -> Handled {
-        self.focused_mut()
-            .map(|elem| elem.widget.handle_event(ctx, event))
-            .unwrap_or(Handled::No)
-    }
-
-    fn handle_msg(&mut self, ctx: &mut Context<State, Msg>, msg: &Msg) -> Handled {
-        for element in &mut self.elements {
-            if let Handled::Yes = element.widget.handle_msg(ctx, msg) {
-                break;
-            }
-        }
-        Handled::No
-    }
-
-    fn update(&mut self, ctx: &mut Context<State, Msg>) {
-        for widget in &mut self.elements {
-            widget.widget.update(ctx);
-        }
     }
 
     fn allocate_space(&mut self, available: u16) {
@@ -172,22 +134,8 @@ impl<Flow, State, Msg> Stack<Flow, State, Msg> {
             }
         }
     }
-}
 
-impl<State, Msg> Widget<State, Msg> for Stack<Vertical, State, Msg> {
-    fn handle_event(&mut self, ctx: &mut Context<State, Msg>, event: &Event) -> Handled {
-        self.handle_event(ctx, event)
-    }
-
-    fn handle_msg(&mut self, ctx: &mut Context<State, Msg>, msg: &Msg) -> Handled {
-        self.handle_msg(ctx, msg)
-    }
-
-    fn update(&mut self, ctx: &mut Context<State, Msg>) {
-        self.update(ctx)
-    }
-
-    fn render(&mut self, buf: &mut BufferView) {
+    fn render_down(&mut self, buf: &mut BufferView) {
         let size = buf.size();
         self.allocate_space(size.y);
 
@@ -197,7 +145,7 @@ impl<State, Msg> Widget<State, Msg> for Stack<Vertical, State, Msg> {
             let focused = self.focused == Some(i);
 
             let mut buf_view = buf.view([0, offset_y], [size.x, offset_y + element.size], focused);
-            element.widget.render(&mut buf_view);
+            element.view.render(&mut buf_view);
 
             offset_y += element.size;
             if offset_y >= size.y {
@@ -205,22 +153,8 @@ impl<State, Msg> Widget<State, Msg> for Stack<Vertical, State, Msg> {
             }
         }
     }
-}
 
-impl<State, Msg> Widget<State, Msg> for Stack<Horizontal, State, Msg> {
-    fn handle_event(&mut self, ctx: &mut Context<State, Msg>, event: &Event) -> Handled {
-        self.handle_event(ctx, event)
-    }
-
-    fn handle_msg(&mut self, ctx: &mut Context<State, Msg>, msg: &Msg) -> Handled {
-        self.handle_msg(ctx, msg)
-    }
-
-    fn update(&mut self, ctx: &mut Context<State, Msg>) {
-        self.update(ctx)
-    }
-
-    fn render(&mut self, buf: &mut BufferView) {
+    fn render_right(&mut self, buf: &mut BufferView) {
         let size = buf.size();
         self.allocate_space(size.x);
 
@@ -230,7 +164,7 @@ impl<State, Msg> Widget<State, Msg> for Stack<Horizontal, State, Msg> {
             let focused = self.focused == Some(i);
 
             let mut buf_view = buf.view([offset_x, 0], [offset_x + element.size, size.y], focused);
-            element.widget.render(&mut buf_view);
+            element.view.render(&mut buf_view);
 
             offset_x += element.size;
             if offset_x >= size.x {
@@ -238,18 +172,6 @@ impl<State, Msg> Widget<State, Msg> for Stack<Horizontal, State, Msg> {
             }
         }
     }
-}
-
-pub struct StackElement<State, Msg> {
-    pub widget: BoxedWidget<State, Msg>,
-    pub constraint: SizeConstraint,
-    pub(crate) size: u16,
-}
-
-#[derive(Default, Clone, Copy)]
-pub struct SizeConstraint {
-    pub min: Option<u16>,
-    pub max: Option<u16>,
 }
 
 impl SizeConstraint {

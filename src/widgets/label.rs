@@ -1,17 +1,16 @@
-use crate::buffer::{BufferView, Cell};
-use crate::style::Style;
-use crate::widget::Widget;
+use crate::buffer::Cell;
+use crate::prelude::*;
 
 #[derive(Default)]
 pub struct Label {
-    pub text: String,
+    pub s: String,
     pub style: Style,
 }
 
 impl Label {
     pub fn new(text: impl Into<String>) -> Self {
         Self {
-            text: text.into(),
+            s: text.into(),
             style: Style::default(),
         }
     }
@@ -22,15 +21,15 @@ impl Label {
     }
 }
 
-impl<State, Msg> Widget<State, Msg> for Label {
-    fn render(&mut self, buf: &mut BufferView) {
+impl<Msg> View<Msg> for Label {
+    fn render(&mut self, buf: &mut crate::buffer::BufferView) {
         let size = buf.size();
 
         if size.y == 0 {
             return;
         }
 
-        for (x, c) in self.text.chars().enumerate().take(size.x as usize) {
+        for (x, c) in self.s.chars().enumerate().take(size.x as usize) {
             buf[[x as u16, 0]] = Some(Cell::new(c, self.style));
         }
     }

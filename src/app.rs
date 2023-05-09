@@ -1,71 +1,58 @@
 use std::io;
 use std::time::{Duration, Instant};
 
+use super::widget::{View, Widget, WidgetWithView};
 use crate::buffer::Buffer;
 use crate::draw_buffer::draw_diff;
-use crate::platform::event::Events as _;
+use crate::platform::event::Events;
 use crate::platform::linux::LinuxTerminal;
 use crate::platform::{Terminal, Writer};
-use crate::widget::{BoxedWidget, ContextOwned, Widget};
 
-pub struct App<State, Msg> {
-    context: ContextOwned<State, Msg>,
+pub struct App<'a, W: Widget> {
+    root: Option<WidgetWithView<'a, W>>,
 
-    root: BoxedWidget<State, Msg>,
-
-    root_buf_prev: Buffer,
-    root_buf: Buffer,
+    buf_old: Buffer,
+    buf_new: Buffer,
 
     term: LinuxTerminal,
+
+    context: Context<W::Msg>,
+    messages_current: Vec<W::Msg>, // A buffer for messages currently being processed.
 
     refresh_rate: Duration,
 }
 
-impl<State, Msg> App<State, Msg> {
-    pub fn new(
-        state: State,
-        root: impl Widget<State, Msg> + 'static,
-        refresh_rate: Duration,
-    ) -> io::Result<Self> {
-        let term = LinuxTerminal::init()?;
-        let term_size = term.size()?;
-
+impl<'a, W: Widget> App<'a, W> {
+    pub fn new(widget: &'a mut W) -> io::Result<Self> {
         Ok(Self {
-            context: ContextOwned::new(state),
+            root: Some(widget.build()),
 
-            root: Box::new(root),
+            buf_old: Buffer::default(),
+            buf_new: Buffer::default(),
 
-            root_buf_prev: Buffer::new(term_size),
-            root_buf: Buffer::new(term_size),
+            term: LinuxTerminal::init()?,
 
-            term,
+            context: Context {
+                messages: vec![],
+                should_rebuild_view: false,
+                should_quit: false,
+            },
+            messages_current: vec![],
 
-            refresh_rate,
+            refresh_rate: Duration::from_millis(17),
         })
     }
 
     pub fn run(mut self) -> io::Result<()> {
         loop {
-            let time = Instant::now();
-            let deadline = time
-                .checked_add(self.refresh_rate)
-                .expect("deadline overflowed");
-
-            self.root.update(&mut self.context.borrow());
-
-            let events = self.term.events();
-            while let Some(event) = events.read_with_deadline(deadline)? {
-                let _ = self.root.handle_event(&mut self.context.borrow(), &event);
-            }
-
-            // TODO: permanent allocation for this
-            let msgs = std::mem::take(&mut self.context.messages);
-            for msg in msgs {
-                let _ = self.root.handle_msg(&mut self.context.borrow(), &msg);
-            }
+            self.frame()?;
 
             if self.context.should_quit {
                 break;
+            }
+
+            if self.context.should_rebuild_view {
+                self.rebuild_view();
             }
 
             self.render()?;
@@ -74,23 +61,77 @@ impl<State, Msg> App<State, Msg> {
         Ok(())
     }
 
+    fn rebuild_view(&mut self) {
+        let root_widget = self.root.take().unwrap().widget;
+        self.root = Some(root_widget.build());
+    }
+
+    fn frame(&mut self) -> io::Result<()> {
+        // Work out how long we have.
+        let time = Instant::now();
+        let deadline = time
+            .checked_add(self.refresh_rate)
+            .expect("deadline overflowed");
+
+        let root = self.root.as_mut().unwrap();
+
+        // Update the widget tree.
+        root.widget.update();
+
+        // Handle events.
+        let events = self.term.events();
+        while let Some(event) = events.read_with_deadline(deadline)? {
+            let _ = root.propagate_event(&mut self.context, &event);
+        }
+
+        // Handle messages.
+        std::mem::swap(&mut self.messages_current, &mut self.context.messages);
+        for message in self.messages_current.drain(..) {
+            let _ = root.widget.propagate_msg(&mut self.context, message);
+        }
+
+        Ok(())
+    }
+
     fn render(&mut self) -> io::Result<()> {
+        let root = self.root.as_mut().unwrap();
+
         // Resize buffer.
         let term_size = self.term.size()?;
-        self.root_buf.resize_and_clear(term_size);
+        self.buf_new.resize_and_clear(term_size);
 
         // Render widget to buffer.
-        let mut root_buf_view = self.root_buf.view(true);
-        self.root.render(&mut root_buf_view);
+        let mut buf_view = self.buf_new.view(true);
+        root.render(&mut buf_view);
 
         // Draw changes to terminal.
         // TODO: make immutable view type.
-        let root_buf_prev_view = self.root_buf_prev.view(false);
-        draw_diff(&root_buf_prev_view, &root_buf_view, self.term.writer());
+        let buf_old_view = self.buf_old.view(false);
+        draw_diff(&buf_old_view, &buf_view, self.term.writer());
 
         // Swap buffers.
-        self.root_buf_prev.clone_from(&self.root_buf);
+        self.buf_old.clone_from(&self.buf_new);
 
         self.term.writer().flush()
+    }
+}
+
+pub struct Context<Msg> {
+    messages: Vec<Msg>,
+    should_rebuild_view: bool,
+    should_quit: bool,
+}
+
+impl<Msg> Context<Msg> {
+    pub fn send(&mut self, message: Msg) {
+        self.messages.push(message);
+    }
+
+    pub fn quit(&mut self) {
+        self.should_quit = true;
+    }
+
+    pub fn rebuild_view(&mut self) {
+        self.should_rebuild_view = true;
     }
 }
