@@ -84,11 +84,13 @@ impl<'a, W: Widget> App<'a, W> {
         // Update the widget tree.
         root.widget.update();
 
+        // Handle events.
         let events = self.term.events();
         while let Some(event) = events.read_with_deadline(deadline)? {
             let _ = root.propagate_event(&mut self.context, &event);
         }
 
+        // Handle messages.
         std::mem::swap(&mut self.messages_current, &mut self.context.messages);
         for message in self.messages_current.drain(..) {
             let _ = root.widget.propagate_msg(&mut self.context, message);
