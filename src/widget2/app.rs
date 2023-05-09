@@ -8,12 +8,6 @@ use crate::platform::event::Events;
 use crate::platform::linux::LinuxTerminal;
 use crate::platform::{Terminal, Writer};
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum ShouldQuit {
-    Yes,
-    No,
-}
-
 pub struct App<'a, W: Widget> {
     root: Option<WidgetWithView<'a, W>>,
 
