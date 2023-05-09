@@ -22,7 +22,6 @@ You should probably just use [tui-rs](https://github.com/fdehau/tui-rs).
 
 - Overlap
 - Scroll Area
-- Label
 - Button
 - Slider
 - Checklist
