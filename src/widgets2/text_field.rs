@@ -29,7 +29,7 @@ impl<Msg> View<Msg> for TextField {
         self.editor.handle_event(event)
     }
 
-    fn render(&self, buf: &mut crate::buffer::BufferView) {
+    fn render(&mut self, buf: &mut crate::buffer::BufferView) {
         let size = buf.size();
 
         if size.area() == 0 {

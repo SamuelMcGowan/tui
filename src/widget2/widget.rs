@@ -10,7 +10,7 @@ pub trait View<Msg> {
         Handled::No
     }
 
-    fn render(&self, buf: &mut BufferView);
+    fn render(&mut self, buf: &mut BufferView);
 }
 
 impl<T: DerefMut<Target = V>, V: View<Msg> + ?Sized, Msg> View<Msg> for T {
@@ -18,8 +18,8 @@ impl<T: DerefMut<Target = V>, V: View<Msg> + ?Sized, Msg> View<Msg> for T {
         self.deref_mut().propagate_event(ctx, event)
     }
 
-    fn render(&self, buf: &mut BufferView) {
-        self.deref().render(buf)
+    fn render(&mut self, buf: &mut BufferView) {
+        self.deref_mut().render(buf)
     }
 }
 
@@ -59,7 +59,7 @@ impl<'a, W: Widget> View<W::Msg> for WidgetWithView<'a, W> {
         }
     }
 
-    fn render(&self, buf: &mut BufferView) {
+    fn render(&mut self, buf: &mut BufferView) {
         self.view.render(buf);
     }
 }

@@ -63,7 +63,7 @@ impl<Msg> View<Msg> for Container<Msg> {
         self.view.propagate_event(ctx, event)
     }
 
-    fn render(&self, buf: &mut crate::buffer::BufferView) {
+    fn render(&mut self, buf: &mut crate::buffer::BufferView) {
         match self.border {
             None => self.view.render(buf),
             Some((kind, style)) => {
