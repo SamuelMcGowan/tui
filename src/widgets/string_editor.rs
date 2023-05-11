@@ -17,6 +17,11 @@ pub struct StringEditor {
 impl StringEditor {
     pub fn entered(&mut self) -> Option<String> {
         if self.text_entered {
+            self.len_chars = 0;
+
+            self.cursor_pos = 0;
+            self.cursor_pos_chars = 0;
+
             self.text_entered = false;
             Some(std::mem::take(&mut self.s))
         } else {

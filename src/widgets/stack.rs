@@ -108,7 +108,7 @@ impl<Msg> Stack<Msg> {
         self.focused = match focused {
             Some(idx) if idx < self.elements.len() => Some(idx),
             _ => None,
-        }
+        };
     }
 
     pub fn focus_prev(&mut self) {

@@ -1,151 +1,77 @@
-use std::time::Duration;
+use tui::prelude::*;
 
-use tui::app::App;
-use tui::callback::{Callback, EventHook, MsgHook};
-use tui::platform::event::{Event, KeyCode, KeyEvent, Modifiers};
-use tui::style::{Color, Style, Weight};
-use tui::widget::{Handled, Widget};
-use tui::widgets::*;
-
-const REFRESH_RATE: Duration = Duration::from_millis(17);
-
-const ACCENT: Color = Color::Red;
-const BORDER_STYLE: Style = Style::new().with_weight(Weight::Dim);
-const BORDER_STYLE_FOCUSED: Style = Style::new().with_fg(ACCENT).with_weight(Weight::Bold);
+mod logger;
 
 fn main() {
-    let app = App::new((), root(), REFRESH_RATE).unwrap();
+    logger::init_logger();
+
+    let app = App::new(TodoList::default()).unwrap();
     app.run().unwrap();
 }
 
 enum Message {
-    TextEntered(String),
-
-    FocusUp,
-    FocusDown,
-
-    OnFocus,
-    OnDefocus,
+    New(String),
 }
 
-fn root() -> impl Widget<(), Message> {
-    let stack = stack();
-
-    Hooked::new(stack).event_hook(EventHook::new(|ctx, _widget, event| match event {
-        Event::Key(KeyEvent {
-            key_code,
-            modifiers,
-        }) => match (key_code, modifiers) {
-            (KeyCode::Char('Q'), &Modifiers::CTRL) => {
-                ctx.quit();
-                Handled::Yes
-            }
-            (KeyCode::Up, modifiers) if modifiers.is_empty() => {
-                ctx.write_msg(Message::FocusUp);
-                Handled::Yes
-            }
-            (KeyCode::Down, modifiers) if modifiers.is_empty() => {
-                ctx.write_msg(Message::FocusDown);
-                Handled::Yes
-            }
-            _ => Handled::No,
-        },
-        _ => Handled::No,
-    }))
+#[derive(Default)]
+struct TodoList {
+    todos: Vec<Todo>,
 }
 
-fn stack() -> impl Widget<(), Message> {
-    let mut stack = VStack::new();
-    stack.add_widget(bordered(text_input()), SizeConstraint::fixed(3));
-    stack.add_widget(bordered(todo_list()), SizeConstraint::new());
-    stack.set_focus(Some(0));
-
-    stack
+struct Todo {
+    text: String,
+    done: bool,
 }
 
-fn todo_list() -> impl Widget<(), Message> {
-    let stack = VStack::new();
+impl Widget for TodoList {
+    type View = Box<dyn View<Message>>;
+    type Msg = Message;
 
-    Hooked::new(stack).msg_hook(MsgHook::new(
-        |ctx, widget: &mut VStack<(), Message>, msg| match msg {
-            Message::TextEntered(s) => {
-                let label = Label::new(format!("TODO: {s}"));
+    fn propagate_msg(&mut self, ctx: &mut Context<Self::Msg>, msg: Self::Msg) -> Handled {
+        match msg {
+            Message::New(text) => {
+                let todo = Todo { text, done: false };
+                self.todos.push(todo);
 
-                let border_style = if widget.as_slice().is_empty() {
-                    BORDER_STYLE_FOCUSED
-                } else {
-                    BORDER_STYLE
-                };
-                let label = Container::new(label).with_border(BorderKind::Line, border_style);
-
-                let label = Hooked::new(label).msg_hook(MsgHook::new(
-                    |_ctx, widget: &mut Container<(), Message>, msg| match msg {
-                        Message::OnFocus => {
-                            widget.border = Some((BorderKind::Line, BORDER_STYLE_FOCUSED));
-                            Handled::Yes
-                        }
-                        Message::OnDefocus => {
-                            widget.border = Some((BorderKind::Line, BORDER_STYLE));
-                            Handled::Yes
-                        }
-                        _ => Handled::No,
-                    },
-                ));
-
-                widget.add_widget(label, SizeConstraint::fixed(3));
-                if widget.as_slice().len() == 1 {
-                    widget.set_focus(Some(0));
-                }
+                ctx.rebuild_view();
 
                 Handled::Yes
             }
-
-            Message::FocusUp => {
-                if let Some(focused) = widget.focused_mut() {
-                    let _ = focused.widget.handle_msg(ctx, &Message::OnDefocus);
-                }
-
-                widget.focus_prev();
-
-                if let Some(focused) = widget.focused_mut() {
-                    let _ = focused.widget.handle_msg(ctx, &Message::OnFocus);
-                }
-
-                Handled::Yes
-            }
-
-            Message::FocusDown => {
-                if let Some(focused) = widget.focused_mut() {
-                    let _ = focused.widget.handle_msg(ctx, &Message::OnDefocus);
-                }
-
-                widget.focus_next();
-
-                if let Some(focused) = widget.focused_mut() {
-                    let _ = focused.widget.handle_msg(ctx, &Message::OnFocus);
-                }
-
-                Handled::Yes
-            }
-
-            _ => Handled::No,
-        },
-    ))
-}
-
-fn text_input() -> impl Widget<(), Message> {
-    TextInput::new().on_enter(Callback::new(|ctx, widget: &mut TextInputState| {
-        let s = widget.text.as_str().trim().to_owned();
-
-        if s.is_empty() {
-            return;
         }
+    }
 
-        widget.text.clear();
-        ctx.write_msg(Message::TextEntered(s));
-    }))
+    fn build(&self) -> Self::View {
+        let text_field = TextField::new().on_enter(Message::New);
+        let text_field = bordered(text_field);
+
+        let mut todos = Stack::new();
+        for todo in &self.todos {
+            let view = todo.build();
+            let view = bordered(view);
+            todos.push(view, SizeConstraint::fixed(3));
+        }
+        let todos = bordered(todos);
+
+        let mut root_view = Stack::new();
+        root_view.push(text_field, SizeConstraint::fixed(3));
+        root_view.push(todos, SizeConstraint::new());
+        root_view.set_focus(Some(0));
+
+        Box::new(root_view)
+    }
 }
 
-fn bordered(w: impl Widget<(), Message> + 'static) -> impl Widget<(), Message> {
-    Container::new(w).with_border(BorderKind::Line, BORDER_STYLE)
+impl Widget for Todo {
+    type View = Label;
+    type Msg = Message;
+
+    fn build(&self) -> Self::View {
+        let done = if self.done { "[-]" } else { "[ ]" };
+
+        Label::new(format!("{done} {}", &self.text))
+    }
+}
+
+fn bordered<Msg>(view: impl View<Msg> + 'static) -> Container<Msg> {
+    Container::new(view).with_border(LineStyle::Line, Style::new())
 }

@@ -6,7 +6,7 @@ pub struct TextField<Msg> {
     pub editor: StringEditor,
     pub style: Style,
 
-    pub on_enter: Option<Box<dyn FnMut(String) -> Msg>>,
+    on_enter: Option<Box<dyn FnMut(String) -> Msg>>,
 }
 
 impl<Msg> Default for TextField<Msg> {

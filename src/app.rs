@@ -60,6 +60,7 @@ impl<W: Widget> App<W> {
 
             if self.context.should_rebuild_view {
                 self.rebuild_view();
+                self.context.should_rebuild_view = false;
             }
 
             self.render()?;
