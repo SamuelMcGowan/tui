@@ -10,9 +10,20 @@ pub struct StringEditor {
 
     cursor_pos: usize,
     cursor_pos_chars: usize,
+
+    text_entered: bool,
 }
 
 impl StringEditor {
+    pub fn entered(&mut self) -> Option<String> {
+        if self.text_entered {
+            self.text_entered = false;
+            Some(std::mem::take(&mut self.s))
+        } else {
+            None
+        }
+    }
+
     pub fn as_str(&self) -> &str {
         &self.s
     }
@@ -43,24 +54,6 @@ impl StringEditor {
 
         self.cursor_pos = self.s.len();
         self.cursor_pos_chars = self.len_chars;
-    }
-
-    pub fn set_cursor(&mut self, pos: usize) {
-        self.cursor_pos_chars = pos.min(self.len_chars);
-        self.cursor_pos = self
-            .s
-            .char_indices()
-            .nth(self.cursor_pos_chars)
-            .map(|(idx, _)| idx)
-            .unwrap_or(self.s.len());
-    }
-
-    pub fn clear(&mut self) {
-        self.s.clear();
-        self.len_chars = 0;
-
-        self.cursor_pos = 0;
-        self.cursor_pos_chars = 0;
     }
 
     fn before_cursor(&self) -> &str {
@@ -141,6 +134,10 @@ impl TextEdit for StringEditor {
         self.cursor_pos = self.s.len();
         self.cursor_pos_chars = self.len_chars;
     }
+
+    fn enter(&mut self) {
+        self.text_entered = true;
+    }
 }
 
 pub trait TextEdit {
@@ -163,6 +160,10 @@ pub trait TextEdit {
                 KeyCode::Home => self.move_home(),
                 KeyCode::End => self.move_end(),
 
+                KeyCode::Return => {
+                    self.enter();
+                }
+
                 _ => return Handled::No,
             },
             _ => return Handled::No,
@@ -184,4 +185,6 @@ pub trait TextEdit {
 
     fn move_home(&mut self);
     fn move_end(&mut self);
+
+    fn enter(&mut self);
 }

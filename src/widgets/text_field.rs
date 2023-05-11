@@ -2,13 +2,25 @@ use super::string_editor::{StringEditor, TextEdit};
 use crate::buffer::Cell;
 use crate::prelude::*;
 
-#[derive(Default)]
-pub struct TextField {
+pub struct TextField<Msg> {
     pub editor: StringEditor,
     pub style: Style,
+
+    pub on_enter: Option<Box<dyn FnMut(String) -> Msg>>,
 }
 
-impl TextField {
+impl<Msg> Default for TextField<Msg> {
+    fn default() -> Self {
+        Self {
+            editor: StringEditor::default(),
+            style: Style::default(),
+
+            on_enter: None,
+        }
+    }
+}
+
+impl<Msg> TextField<Msg> {
     pub fn new() -> Self {
         Self::default()
     }
@@ -22,11 +34,23 @@ impl TextField {
         self.style = style;
         self
     }
+
+    pub fn on_enter(mut self, f: impl FnMut(String) -> Msg + 'static) -> Self {
+        self.on_enter = Some(Box::new(f));
+        self
+    }
 }
 
-impl<Msg> View<Msg> for TextField {
-    fn propagate_event(&mut self, _ctx: &mut Context<Msg>, event: &Event) -> Handled {
-        self.editor.handle_event(event)
+impl<Msg> View<Msg> for TextField<Msg> {
+    fn propagate_event(&mut self, ctx: &mut Context<Msg>, event: &Event) -> Handled {
+        let handled = self.editor.handle_event(event);
+        if let Some(s) = self.editor.entered() {
+            if let Some(f) = &mut self.on_enter {
+                let msg = f(s);
+                ctx.send(msg);
+            }
+        }
+        handled
     }
 
     fn render(&mut self, buf: &mut crate::buffer::BufferView) {
