@@ -11,22 +11,12 @@ pub struct StringEditor {
     cursor_pos: usize,
     cursor_pos_chars: usize,
 
-    text_entered: bool,
+    entered: Option<String>,
 }
 
 impl StringEditor {
     pub fn entered(&mut self) -> Option<String> {
-        if self.text_entered {
-            self.len_chars = 0;
-
-            self.cursor_pos = 0;
-            self.cursor_pos_chars = 0;
-
-            self.text_entered = false;
-            Some(std::mem::take(&mut self.s))
-        } else {
-            None
-        }
+        self.entered.take()
     }
 
     pub fn as_str(&self) -> &str {
@@ -59,6 +49,14 @@ impl StringEditor {
 
         self.cursor_pos = self.s.len();
         self.cursor_pos_chars = self.len_chars;
+    }
+
+    pub fn clear(&mut self) {
+        self.s.clear();
+        self.len_chars = 0;
+
+        self.cursor_pos = 0;
+        self.cursor_pos_chars = 0;
     }
 
     fn before_cursor(&self) -> &str {
@@ -141,7 +139,8 @@ impl TextEdit for StringEditor {
     }
 
     fn enter(&mut self) {
-        self.text_entered = true;
+        self.entered = Some(std::mem::take(&mut self.s));
+        self.clear();
     }
 }
 
