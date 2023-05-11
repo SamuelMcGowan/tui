@@ -39,8 +39,13 @@ impl<'a, W: Widget> App<'a, W> {
             },
             messages_current: vec![],
 
-            refresh_rate: Duration::from_millis(17),
+            refresh_rate: Duration::from_millis(16),
         })
+    }
+
+    pub fn with_refresh_rate(mut self, refresh_rate: Duration) -> Self {
+        self.refresh_rate = refresh_rate;
+        self
     }
 
     pub fn run(mut self) -> io::Result<()> {

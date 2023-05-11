@@ -1,6 +1,7 @@
 use crate::buffer::BufferView;
 use crate::prelude::*;
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Direction {
     Right,
     Down,
@@ -36,10 +37,44 @@ impl<Msg> Default for Stack<Msg> {
 
 impl<Msg> View<Msg> for Stack<Msg> {
     fn propagate_event(&mut self, ctx: &mut Context<Msg>, event: &Event) -> Handled {
-        if let Some(focused) = self.focused() {
-            focused.view.propagate_event(ctx, event)
-        } else {
-            Handled::No
+        let handled = match event {
+            Event::Key(KeyEvent {
+                key_code,
+                modifiers,
+            }) if modifiers.is_empty() => match key_code {
+                KeyCode::Up if self.direction == Direction::Down => {
+                    self.focus_prev();
+                    Handled::Yes
+                }
+                KeyCode::Down if self.direction == Direction::Down => {
+                    self.focus_next();
+                    Handled::Yes
+                }
+
+                KeyCode::Left if self.direction == Direction::Right => {
+                    self.focus_prev();
+                    Handled::Yes
+                }
+                KeyCode::Right if self.direction == Direction::Right => {
+                    self.focus_next();
+                    Handled::Yes
+                }
+
+                _ => Handled::No,
+            },
+
+            _ => Handled::No,
+        };
+
+        match handled {
+            Handled::Yes => Handled::Yes,
+            Handled::No => {
+                if let Some(focused) = self.focused() {
+                    focused.view.propagate_event(ctx, event)
+                } else {
+                    Handled::No
+                }
+            }
         }
     }
 
@@ -52,11 +87,40 @@ impl<Msg> View<Msg> for Stack<Msg> {
 }
 
 impl<Msg> Stack<Msg> {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    pub fn with_direction(mut self, direction: Direction) -> Self {
+        self.direction = direction;
+        self
+    }
+
+    pub fn push(&mut self, view: impl View<Msg> + 'static, constraint: SizeConstraint) {
+        self.elements.push(StackElement {
+            view: Box::new(view),
+            constraint,
+            size: 0,
+        });
+    }
+
     pub fn set_focus(&mut self, focused: Option<usize>) {
         self.focused = match focused {
             Some(idx) if idx < self.elements.len() => Some(idx),
             _ => None,
         }
+    }
+
+    pub fn focus_prev(&mut self) {
+        self.focused = self.focused.map(|idx| idx.saturating_sub(1));
+    }
+
+    pub fn focus_next(&mut self) {
+        // If focused is `Some`, there is at least one element so the subtraction can't
+        // underflow.
+        self.focused = self
+            .focused
+            .map(|idx| idx.saturating_add(1).min(self.elements.len() - 1));
     }
 
     fn focused(&mut self) -> Option<&mut StackElement<Msg>> {
