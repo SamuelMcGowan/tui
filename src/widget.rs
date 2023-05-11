@@ -34,39 +34,11 @@ pub trait Widget: Sized {
     type View: View<Self::Msg>;
     type Msg;
 
-    fn on_event(&mut self, _ctx: &mut Context<Self::Msg>, _event: &Event) -> Handled {
-        Handled::No
-    }
-
     fn propagate_msg(&mut self, _ctx: &mut Context<Self::Msg>, _msg: Self::Msg) -> Handled {
         Handled::No
     }
 
     fn update(&mut self) {}
 
-    fn build(&mut self) -> WidgetWithView<Self>;
-}
-
-pub struct WidgetWithView<'a, W: Widget> {
-    pub(super) widget: &'a mut W,
-    view: W::View,
-}
-
-impl<'a, W: Widget> WidgetWithView<'a, W> {
-    pub fn new(widget: &'a mut W, view: W::View) -> Self {
-        Self { widget, view }
-    }
-}
-
-impl<'a, W: Widget> View<W::Msg> for WidgetWithView<'a, W> {
-    fn propagate_event(&mut self, ctx: &mut Context<W::Msg>, event: &Event) -> Handled {
-        match self.view.propagate_event(ctx, event) {
-            Handled::Yes => Handled::Yes,
-            Handled::No => self.widget.on_event(ctx, event),
-        }
-    }
-
-    fn render(&mut self, buf: &mut BufferView) {
-        self.view.render(buf);
-    }
+    fn build(&self) -> Self::View;
 }

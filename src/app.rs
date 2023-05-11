@@ -1,15 +1,16 @@
 use std::io;
 use std::time::{Duration, Instant};
 
-use super::widget::{View, Widget, WidgetWithView};
+use super::widget::{View, Widget};
 use crate::buffer::Buffer;
 use crate::draw_buffer::draw_diff;
 use crate::platform::event::Events;
 use crate::platform::linux::LinuxTerminal;
 use crate::platform::{Terminal, Writer};
 
-pub struct App<'a, W: Widget> {
-    root: Option<WidgetWithView<'a, W>>,
+pub struct App<W: Widget> {
+    root: W,
+    root_view: W::View,
 
     buf_old: Buffer,
     buf_new: Buffer,
@@ -22,10 +23,11 @@ pub struct App<'a, W: Widget> {
     refresh_rate: Duration,
 }
 
-impl<'a, W: Widget> App<'a, W> {
-    pub fn new(widget: &'a mut W) -> io::Result<Self> {
+impl<W: Widget> App<W> {
+    pub fn new(widget: W) -> io::Result<Self> {
         Ok(Self {
-            root: Some(widget.build()),
+            root_view: widget.build(),
+            root: widget,
 
             buf_old: Buffer::default(),
             buf_new: Buffer::default(),
@@ -67,8 +69,7 @@ impl<'a, W: Widget> App<'a, W> {
     }
 
     fn rebuild_view(&mut self) {
-        let root_widget = self.root.take().unwrap().widget;
-        self.root = Some(root_widget.build());
+        self.root_view = self.root.build();
     }
 
     fn frame(&mut self) -> io::Result<()> {
@@ -78,36 +79,32 @@ impl<'a, W: Widget> App<'a, W> {
             .checked_add(self.refresh_rate)
             .expect("deadline overflowed");
 
-        let root = self.root.as_mut().unwrap();
-
         // Update the widget tree.
-        root.widget.update();
+        self.root.update();
 
         // Handle events.
         let events = self.term.events();
         while let Some(event) = events.read_with_deadline(deadline)? {
-            let _ = root.propagate_event(&mut self.context, &event);
+            let _ = self.root_view.propagate_event(&mut self.context, &event);
         }
 
         // Handle messages.
         std::mem::swap(&mut self.messages_current, &mut self.context.messages);
         for message in self.messages_current.drain(..) {
-            let _ = root.widget.propagate_msg(&mut self.context, message);
+            let _ = self.root.propagate_msg(&mut self.context, message);
         }
 
         Ok(())
     }
 
     fn render(&mut self) -> io::Result<()> {
-        let root = self.root.as_mut().unwrap();
-
         // Resize buffer.
         let term_size = self.term.size()?;
         self.buf_new.resize_and_clear(term_size);
 
         // Render widget to buffer.
         let mut buf_view = self.buf_new.view(true);
-        root.render(&mut buf_view);
+        self.root_view.render(&mut buf_view);
 
         // Draw changes to terminal.
         // TODO: make immutable view type.
