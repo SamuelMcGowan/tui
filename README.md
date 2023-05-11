@@ -12,6 +12,12 @@ You should probably just use [tui-rs](https://github.com/fdehau/tui-rs).
 
 ## TODO
 
+- Fix examples
+- Rename message handler & take messages by reference.
+- Clean up callback stuff
+- Event hook view
+- Better layout algorithm
+
 - Mouse events
 - Testing
 - Handle frame timing better.
