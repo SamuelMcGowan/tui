@@ -16,7 +16,11 @@ You should probably just use [tui-rs](https://github.com/fdehau/tui-rs).
 - Rename message handler & take messages by reference.
 - Clean up callback stuff
 - Event hook view
+- Rebuild view every frame and create a `Memoized` struct to wrap a widget.
 - Better layout algorithm
+
+- Rename `Msg` to `Message`.
+- Don't take `&mut self` in render.
 
 - Mouse events
 - Testing
