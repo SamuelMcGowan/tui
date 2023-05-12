@@ -42,7 +42,7 @@ impl<Msg> TextField<Msg> {
 }
 
 impl<Msg> View<Msg> for TextField<Msg> {
-    fn propagate_event(&mut self, ctx: &mut Context<Msg>, event: &Event) -> Handled {
+    fn on_event(&mut self, ctx: &mut Context<Msg>, event: &Event) -> Handled {
         let handled = self.editor.handle_event(event);
         if let Some(s) = self.editor.entered() {
             if let Some(f) = &mut self.on_enter {

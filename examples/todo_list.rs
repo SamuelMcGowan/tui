@@ -27,11 +27,13 @@ impl Widget for TodoList {
     type View = Box<dyn View<Message>>;
     type Msg = Message;
 
-    fn propagate_msg(&mut self, ctx: &mut Context<Self::Msg>, msg: Self::Msg) -> Handled {
+    fn on_msg(&mut self, ctx: &mut Context<Self::Msg>, msg: &Self::Msg) -> Handled {
         match msg {
             Message::New(text) => {
-                let todo = Todo { text, done: false };
-                self.todos.push(todo);
+                self.todos.push(Todo {
+                    text: text.to_owned(),
+                    done: false,
+                });
 
                 ctx.rebuild_view();
 

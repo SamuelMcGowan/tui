@@ -36,7 +36,7 @@ impl<Msg> Default for Stack<Msg> {
 }
 
 impl<Msg> View<Msg> for Stack<Msg> {
-    fn propagate_event(&mut self, ctx: &mut Context<Msg>, event: &Event) -> Handled {
+    fn on_event(&mut self, ctx: &mut Context<Msg>, event: &Event) -> Handled {
         let handled = match event {
             Event::Key(KeyEvent {
                 key_code,
@@ -70,7 +70,7 @@ impl<Msg> View<Msg> for Stack<Msg> {
             Handled::Yes => Handled::Yes,
             Handled::No => {
                 if let Some(focused) = self.focused() {
-                    focused.view.propagate_event(ctx, event)
+                    focused.view.on_event(ctx, event)
                 } else {
                     Handled::No
                 }

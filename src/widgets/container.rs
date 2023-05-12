@@ -59,8 +59,8 @@ impl<Msg> Container<Msg> {
 }
 
 impl<Msg> View<Msg> for Container<Msg> {
-    fn propagate_event(&mut self, ctx: &mut Context<Msg>, event: &Event) -> Handled {
-        self.view.propagate_event(ctx, event)
+    fn on_event(&mut self, ctx: &mut Context<Msg>, event: &Event) -> Handled {
+        self.view.on_event(ctx, event)
     }
 
     fn render(&mut self, buf: &mut crate::buffer::BufferView) {

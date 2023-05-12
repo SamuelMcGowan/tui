@@ -13,7 +13,7 @@ pub enum Handled {
 }
 
 pub trait View<Msg> {
-    fn propagate_event(&mut self, _ctx: &mut Context<Msg>, _event: &Event) -> Handled {
+    fn on_event(&mut self, _ctx: &mut Context<Msg>, _event: &Event) -> Handled {
         Handled::No
     }
 
@@ -21,8 +21,8 @@ pub trait View<Msg> {
 }
 
 impl<T: DerefMut<Target = V>, V: View<Msg> + ?Sized, Msg> View<Msg> for T {
-    fn propagate_event(&mut self, ctx: &mut Context<Msg>, event: &Event) -> Handled {
-        self.deref_mut().propagate_event(ctx, event)
+    fn on_event(&mut self, ctx: &mut Context<Msg>, event: &Event) -> Handled {
+        self.deref_mut().on_event(ctx, event)
     }
 
     fn render(&mut self, buf: &mut BufferView) {
@@ -34,7 +34,7 @@ pub trait Widget: Sized {
     type View: View<Self::Msg>;
     type Msg;
 
-    fn propagate_msg(&mut self, _ctx: &mut Context<Self::Msg>, _msg: Self::Msg) -> Handled {
+    fn on_msg(&mut self, _ctx: &mut Context<Self::Msg>, _msg: &Self::Msg) -> Handled {
         Handled::No
     }
 

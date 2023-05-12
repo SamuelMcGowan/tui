@@ -12,7 +12,6 @@ You should probably just use [tui-rs](https://github.com/fdehau/tui-rs).
 
 ## TODO
 
-- Rename message handler & take messages by reference.
 - Rebuild view every frame and create a `Memoized` struct to wrap a widget.
 - Event hook view
 - Clean up callback stuff

@@ -86,13 +86,13 @@ impl<W: Widget> App<W> {
         // Handle events.
         let events = self.term.events();
         while let Some(event) = events.read_with_deadline(deadline)? {
-            let _ = self.root_view.propagate_event(&mut self.context, &event);
+            let _ = self.root_view.on_event(&mut self.context, &event);
         }
 
         // Handle messages.
         std::mem::swap(&mut self.messages_current, &mut self.context.messages);
         for message in self.messages_current.drain(..) {
-            let _ = self.root.propagate_msg(&mut self.context, message);
+            let _ = self.root.on_msg(&mut self.context, &message);
         }
 
         Ok(())
