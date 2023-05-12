@@ -14,13 +14,15 @@ You should probably just use [tui-rs](https://github.com/fdehau/tui-rs).
 
 - Fix examples
 - Rename message handler & take messages by reference.
-- Clean up callback stuff
-- Event hook view
 - Rebuild view every frame and create a `Memoized` struct to wrap a widget.
+- Event hook view
+- Clean up callback stuff
 - Better layout algorithm
 
+- Rename `Widget` to `Component`.
 - Rename `Msg` to `Message`.
 - Don't take `&mut self` in render.
+- Make `Container` generic over the widget type.
 
 - Mouse events
 - Testing
