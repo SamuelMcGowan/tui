@@ -1,45 +1,27 @@
-use std::time::Duration;
-
-use tui::app::App;
-use tui::callback::EventHook;
-use tui::platform::event::{Event, KeyCode, KeyEvent, Modifiers};
-use tui::style::{Color, Style};
-use tui::widget::Handled;
-use tui::widgets::*;
+use tui::prelude::*;
 
 fn main() {
-    let mut vstack = VStack::new();
-    vstack.add_widget(
-        Label::new("Hello, World!").with_style(Style {
-            fg: Color::Cyan,
-            ..Default::default()
-        }),
-        SizeConstraint::fixed(1),
-    );
-    vstack.add_widget(TextInput::new(), SizeConstraint::new().with_min(10));
-    vstack.add_widget(TextInput::new(), SizeConstraint::new().with_max(20));
-    vstack.set_focus(Some(1));
-
-    let hooked = Hooked::new(vstack).event_hook(EventHook::new(
-        |_ctx, widget: &mut VStack<(), ()>, event| match event {
-            Event::Key(KeyEvent {
-                key_code,
-                modifiers: Modifiers::SHIFT,
-            }) => match key_code {
-                KeyCode::Up => {
-                    widget.focus_prev();
-                    Handled::Yes
-                }
-                KeyCode::Down => {
-                    widget.focus_next();
-                    Handled::Yes
-                }
-                _ => Handled::No,
-            },
-            _ => Handled::No,
-        },
-    ));
-
-    let app: App<(), ()> = App::new((), hooked, Duration::from_millis(16)).unwrap();
+    let app = App::new(MyApp).unwrap();
     app.run().unwrap();
+}
+
+struct MyApp;
+
+impl Widget for MyApp {
+    type View = Stack<()>;
+    type Msg = ();
+
+    fn build(&self) -> Self::View {
+        let mut stack = Stack::new();
+
+        stack.push(
+            Label::new("Hello, World!").with_style(Style::new().with_fg(Color::Cyan)),
+            SizeConstraint::fixed(1),
+        );
+        stack.push(TextField::new(), SizeConstraint::new().with_min(10));
+        stack.push(TextField::new(), SizeConstraint::new().with_max(20));
+        stack.set_focus(Some(1));
+
+        stack
+    }
 }

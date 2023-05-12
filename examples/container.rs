@@ -1,16 +1,22 @@
-use std::time::Duration;
-
-use tui::app::App;
-use tui::style::{Color, Style, Weight};
-use tui::widgets::*;
+use tui::prelude::*;
 
 fn main() {
-    let label_style = Style::new().with_fg(Color::Red).with_weight(Weight::Bold);
-    let border_style = Style::new().with_fg(Color::Yellow);
-
-    let label = Label::new("Hello, World!").with_style(label_style);
-    let root = Container::new(label).with_border(BorderKind::Line, border_style);
-
-    let app: App<(), ()> = App::new((), root, Duration::from_millis(16)).unwrap();
+    let app = App::new(MyApp).unwrap();
     app.run().unwrap();
+}
+
+struct MyApp;
+
+impl Widget for MyApp {
+    type View = Container<()>;
+    type Msg = ();
+
+    fn build(&self) -> Self::View {
+        let label_style = Style::new().with_fg(Color::Red).with_weight(Weight::Bold);
+        let border_style = Style::new().with_fg(Color::Yellow);
+
+        let label = Label::new("Hello, World!").with_style(label_style);
+
+        Container::new(label).with_border(LineStyle::Line, border_style)
+    }
 }
