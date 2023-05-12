@@ -12,16 +12,16 @@ pub enum Handled {
     No,
 }
 
-pub trait View<Msg> {
-    fn on_event(&mut self, _ctx: &mut Context<Msg>, _event: &Event) -> Handled {
+pub trait View<Message> {
+    fn on_event(&mut self, _ctx: &mut Context<Message>, _event: &Event) -> Handled {
         Handled::No
     }
 
     fn render(&mut self, buf: &mut BufferView);
 }
 
-impl<T: DerefMut<Target = V>, V: View<Msg> + ?Sized, Msg> View<Msg> for T {
-    fn on_event(&mut self, ctx: &mut Context<Msg>, event: &Event) -> Handled {
+impl<T: DerefMut<Target = V>, V: View<Message> + ?Sized, Message> View<Message> for T {
+    fn on_event(&mut self, ctx: &mut Context<Message>, event: &Event) -> Handled {
         self.deref_mut().on_event(ctx, event)
     }
 
@@ -31,10 +31,10 @@ impl<T: DerefMut<Target = V>, V: View<Msg> + ?Sized, Msg> View<Msg> for T {
 }
 
 pub trait Component: Sized {
-    type View: View<Self::Msg>;
-    type Msg;
+    type Message;
+    type View: View<Self::Message>;
 
-    fn on_msg(&mut self, _ctx: &mut Context<Self::Msg>, _msg: &Self::Msg) -> Handled {
+    fn on_message(&mut self, _ctx: &mut Context<Self::Message>, _msg: &Self::Message) -> Handled {
         Handled::No
     }
 

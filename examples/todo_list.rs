@@ -24,10 +24,10 @@ struct Todo {
 }
 
 impl Component for TodoList {
+    type Message = Message;
     type View = Box<dyn View<Message>>;
-    type Msg = Message;
 
-    fn on_msg(&mut self, ctx: &mut Context<Self::Msg>, msg: &Self::Msg) -> Handled {
+    fn on_message(&mut self, ctx: &mut Context<Self::Message>, msg: &Self::Message) -> Handled {
         match msg {
             Message::New(text) => {
                 self.todos.push(Todo {
@@ -65,7 +65,7 @@ impl Component for TodoList {
 
 impl Component for Todo {
     type View = Label;
-    type Msg = Message;
+    type Message = Message;
 
     fn build(&self) -> Self::View {
         let done = if self.done { "[-]" } else { "[ ]" };
@@ -74,6 +74,6 @@ impl Component for Todo {
     }
 }
 
-fn bordered<Msg>(view: impl View<Msg> + 'static) -> Container<Msg> {
+fn bordered<Message>(view: impl View<Message> + 'static) -> Container<Message> {
     Container::new(view).with_border(LineStyle::Line, Style::new())
 }

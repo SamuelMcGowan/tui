@@ -8,8 +8,8 @@ fn main() {
 struct MyApp;
 
 impl Component for MyApp {
+    type Message = ();
     type View = Stack<()>;
-    type Msg = ();
 
     fn build(&self) -> Self::View {
         let mut stack = Stack::new();

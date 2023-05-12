@@ -2,14 +2,14 @@ use super::string_editor::{StringEditor, TextEdit};
 use crate::buffer::Cell;
 use crate::prelude::*;
 
-pub struct TextField<Msg> {
+pub struct TextField<Message> {
     pub editor: StringEditor,
     pub style: Style,
 
-    on_enter: Option<Box<dyn FnMut(String) -> Msg>>,
+    on_enter: Option<Box<dyn FnMut(String) -> Message>>,
 }
 
-impl<Msg> Default for TextField<Msg> {
+impl<Message> Default for TextField<Message> {
     fn default() -> Self {
         Self {
             editor: StringEditor::default(),
@@ -20,7 +20,7 @@ impl<Msg> Default for TextField<Msg> {
     }
 }
 
-impl<Msg> TextField<Msg> {
+impl<Message> TextField<Message> {
     pub fn new() -> Self {
         Self::default()
     }
@@ -35,14 +35,14 @@ impl<Msg> TextField<Msg> {
         self
     }
 
-    pub fn on_enter(mut self, f: impl FnMut(String) -> Msg + 'static) -> Self {
+    pub fn on_enter(mut self, f: impl FnMut(String) -> Message + 'static) -> Self {
         self.on_enter = Some(Box::new(f));
         self
     }
 }
 
-impl<Msg> View<Msg> for TextField<Msg> {
-    fn on_event(&mut self, ctx: &mut Context<Msg>, event: &Event) -> Handled {
+impl<Message> View<Message> for TextField<Message> {
+    fn on_event(&mut self, ctx: &mut Context<Message>, event: &Event) -> Handled {
         let handled = self.editor.handle_event(event);
         if let Some(s) = self.editor.entered() {
             if let Some(f) = &mut self.on_enter {

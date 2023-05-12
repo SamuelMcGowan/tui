@@ -39,13 +39,13 @@ impl LineStyle {
     }
 }
 
-pub struct Container<Msg> {
-    pub view: Box<dyn View<Msg>>,
+pub struct Container<Message> {
+    pub view: Box<dyn View<Message>>,
     pub border: Option<(LineStyle, Style)>,
 }
 
-impl<Msg> Container<Msg> {
-    pub fn new(view: impl View<Msg> + 'static) -> Self {
+impl<Message> Container<Message> {
+    pub fn new(view: impl View<Message> + 'static) -> Self {
         Self {
             view: Box::new(view),
             border: None,
@@ -58,8 +58,8 @@ impl<Msg> Container<Msg> {
     }
 }
 
-impl<Msg> View<Msg> for Container<Msg> {
-    fn on_event(&mut self, ctx: &mut Context<Msg>, event: &Event) -> Handled {
+impl<Message> View<Message> for Container<Message> {
+    fn on_event(&mut self, ctx: &mut Context<Message>, event: &Event) -> Handled {
         self.view.on_event(ctx, event)
     }
 

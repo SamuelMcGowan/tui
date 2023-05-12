@@ -8,8 +8,8 @@ fn main() {
 struct MyApp;
 
 impl Component for MyApp {
+    type Message = ();
     type View = Container<()>;
-    type Msg = ();
 
     fn build(&self) -> Self::View {
         let label_style = Style::new().with_fg(Color::Red).with_weight(Weight::Bold);

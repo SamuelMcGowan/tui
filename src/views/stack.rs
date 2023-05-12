@@ -7,14 +7,14 @@ pub enum Direction {
     Down,
 }
 
-pub struct Stack<Msg> {
-    elements: Vec<StackElement<Msg>>,
+pub struct Stack<Message> {
+    elements: Vec<StackElement<Message>>,
     focused: Option<usize>,
     direction: Direction,
 }
 
-struct StackElement<Msg> {
-    view: Box<dyn View<Msg>>,
+struct StackElement<Message> {
+    view: Box<dyn View<Message>>,
     constraint: SizeConstraint,
     size: u16,
 }
@@ -25,7 +25,7 @@ pub struct SizeConstraint {
     pub max: Option<u16>,
 }
 
-impl<Msg> Default for Stack<Msg> {
+impl<Message> Default for Stack<Message> {
     fn default() -> Self {
         Self {
             elements: vec![],
@@ -35,8 +35,8 @@ impl<Msg> Default for Stack<Msg> {
     }
 }
 
-impl<Msg> View<Msg> for Stack<Msg> {
-    fn on_event(&mut self, ctx: &mut Context<Msg>, event: &Event) -> Handled {
+impl<Message> View<Message> for Stack<Message> {
+    fn on_event(&mut self, ctx: &mut Context<Message>, event: &Event) -> Handled {
         let handled = match event {
             Event::Key(KeyEvent {
                 key_code,
@@ -86,7 +86,7 @@ impl<Msg> View<Msg> for Stack<Msg> {
     }
 }
 
-impl<Msg> Stack<Msg> {
+impl<Message> Stack<Message> {
     pub fn new() -> Self {
         Self::default()
     }
@@ -96,7 +96,7 @@ impl<Msg> Stack<Msg> {
         self
     }
 
-    pub fn push(&mut self, view: impl View<Msg> + 'static, constraint: SizeConstraint) {
+    pub fn push(&mut self, view: impl View<Message> + 'static, constraint: SizeConstraint) {
         self.elements.push(StackElement {
             view: Box::new(view),
             constraint,
@@ -123,7 +123,7 @@ impl<Msg> Stack<Msg> {
             .map(|idx| idx.saturating_add(1).min(self.elements.len() - 1));
     }
 
-    fn focused(&mut self) -> Option<&mut StackElement<Msg>> {
+    fn focused(&mut self) -> Option<&mut StackElement<Message>> {
         self.focused.map(|idx| &mut self.elements[idx])
     }
 

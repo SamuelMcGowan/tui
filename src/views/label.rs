@@ -21,7 +21,7 @@ impl Label {
     }
 }
 
-impl<Msg> View<Msg> for Label {
+impl<Message> View<Message> for Label {
     fn render(&mut self, buf: &mut crate::buffer::BufferView) {
         let size = buf.size();
 

@@ -17,8 +17,8 @@ pub struct App<C: Component> {
 
     term: LinuxTerminal,
 
-    context: Context<C::Msg>,
-    messages_current: Vec<C::Msg>, // A buffer for messages currently being processed.
+    context: Context<C::Message>,
+    messages_current: Vec<C::Message>, // A buffer for messages currently being processed.
 
     refresh_rate: Duration,
 }
@@ -92,7 +92,7 @@ impl<C: Component> App<C> {
         // Handle messages.
         std::mem::swap(&mut self.messages_current, &mut self.context.messages);
         for message in self.messages_current.drain(..) {
-            let _ = self.root.on_msg(&mut self.context, &message);
+            let _ = self.root.on_message(&mut self.context, &message);
         }
 
         Ok(())
@@ -119,14 +119,14 @@ impl<C: Component> App<C> {
     }
 }
 
-pub struct Context<Msg> {
-    messages: Vec<Msg>,
+pub struct Context<Message> {
+    messages: Vec<Message>,
     should_rebuild_view: bool,
     should_quit: bool,
 }
 
-impl<Msg> Context<Msg> {
-    pub fn send(&mut self, message: Msg) {
+impl<Message> Context<Message> {
+    pub fn send(&mut self, message: Message) {
         self.messages.push(message);
     }
 
