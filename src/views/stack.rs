@@ -1,3 +1,5 @@
+use std::cell::Cell;
+
 use crate::buffer::BufferView;
 use crate::prelude::*;
 
@@ -16,7 +18,7 @@ pub struct Stack<Message> {
 struct StackElement<Message> {
     view: Box<dyn View<Message>>,
     constraint: SizeConstraint,
-    size: u16,
+    size: Cell<u16>,
 }
 
 #[derive(Default, Clone, Copy)]
@@ -78,7 +80,7 @@ impl<Message> View<Message> for Stack<Message> {
         }
     }
 
-    fn render(&mut self, buf: &mut BufferView) {
+    fn render(&self, buf: &mut BufferView) {
         match self.direction {
             Direction::Down => self.render_down(buf),
             Direction::Right => self.render_right(buf),
@@ -100,7 +102,7 @@ impl<Message> Stack<Message> {
         self.elements.push(StackElement {
             view: Box::new(view),
             constraint,
-            size: 0,
+            size: Cell::new(0),
         });
     }
 
@@ -127,7 +129,7 @@ impl<Message> Stack<Message> {
         self.focused.map(|idx| &mut self.elements[idx])
     }
 
-    fn allocate_space(&mut self, available: u16) {
+    fn allocate_space(&self, available: u16) {
         if self.elements.is_empty() {
             return;
         }
@@ -139,23 +141,23 @@ impl<Message> Stack<Message> {
         }
     }
 
-    fn allocate_min(&mut self) -> u16 {
+    fn allocate_min(&self) -> u16 {
         let mut total = 0;
-        for element in &mut self.elements {
+        for element in &self.elements {
             let min = element.constraint.min.unwrap_or(1);
 
-            element.size = min;
+            element.size.set(min);
             total += min;
         }
         total
     }
 
-    fn allocate_max(&mut self, available: u16, min_required: u16) -> u16 {
+    fn allocate_max(&self, available: u16, min_required: u16) -> u16 {
         let remainder = available - min_required;
         let share = remainder / self.elements.len() as u16;
 
         let mut total = 0;
-        for element in &mut self.elements {
+        for element in &self.elements {
             let min = element.constraint.min.unwrap_or(1);
 
             let incr = match element.constraint.max {
@@ -163,14 +165,14 @@ impl<Message> Stack<Message> {
                 None => share,
             };
 
-            element.size += incr;
+            element.size.set(element.size.get() + incr);
             total += incr;
         }
 
         remainder.saturating_sub(total)
     }
 
-    fn allocate_remainder(&mut self, remainder: u16) {
+    fn allocate_remainder(&self, remainder: u16) {
         let num_without_max = self
             .elements
             .iter()
@@ -185,52 +187,60 @@ impl<Message> Stack<Message> {
         let share = remainder / num_without_max as u16;
         let mut rem = remainder as usize % num_without_max;
 
-        for element in &mut self.elements {
+        for element in &self.elements {
             if element.constraint.max.is_none() {
-                element.size += share;
+                element.size.set(element.size.get() + share);
 
                 // This uses up the final remaining space such that the entire space is used if
                 // possible.
                 if rem > 0 {
-                    element.size += 1;
+                    element.size.set(element.size.get() + 1);
                     rem -= 1;
                 }
             }
         }
     }
 
-    fn render_down(&mut self, buf: &mut BufferView) {
+    fn render_down(&self, buf: &mut BufferView) {
         let size = buf.size();
         self.allocate_space(size.y);
 
         let mut offset_y = 0;
-        for (i, element) in self.elements.iter_mut().enumerate() {
+        for (i, element) in self.elements.iter().enumerate() {
             // This is dumb.
             let focused = self.focused == Some(i);
 
-            let mut buf_view = buf.view([0, offset_y], [size.x, offset_y + element.size], focused);
+            let mut buf_view = buf.view(
+                [0, offset_y],
+                [size.x, offset_y + element.size.get()],
+                focused,
+            );
             element.view.render(&mut buf_view);
 
-            offset_y += element.size;
+            offset_y += element.size.get();
             if offset_y >= size.y {
                 break;
             }
         }
     }
 
-    fn render_right(&mut self, buf: &mut BufferView) {
+    fn render_right(&self, buf: &mut BufferView) {
         let size = buf.size();
         self.allocate_space(size.x);
 
         let mut offset_x = 0;
-        for (i, element) in self.elements.iter_mut().enumerate() {
+        for (i, element) in self.elements.iter().enumerate() {
             // Still dumb.
             let focused = self.focused == Some(i);
 
-            let mut buf_view = buf.view([offset_x, 0], [offset_x + element.size, size.y], focused);
+            let mut buf_view = buf.view(
+                [offset_x, 0],
+                [offset_x + element.size.get(), size.y],
+                focused,
+            );
             element.view.render(&mut buf_view);
 
-            offset_x += element.size;
+            offset_x += element.size.get();
             if offset_x >= size.x {
                 break;
             }

@@ -17,7 +17,6 @@ You should probably just use [tui-rs](https://github.com/fdehau/tui-rs).
 - Clean up callback stuff
 - Better layout algorithm
 
-- Don't take `&mut self` in render.
 - Make `Container` generic over the component type.
 
 - Mouse events

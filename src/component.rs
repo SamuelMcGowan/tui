@@ -17,7 +17,7 @@ pub trait View<Message> {
         Handled::No
     }
 
-    fn render(&mut self, buf: &mut BufferView);
+    fn render(&self, buf: &mut BufferView);
 }
 
 impl<T: DerefMut<Target = V>, V: View<Message> + ?Sized, Message> View<Message> for T {
@@ -25,8 +25,8 @@ impl<T: DerefMut<Target = V>, V: View<Message> + ?Sized, Message> View<Message> 
         self.deref_mut().on_event(ctx, event)
     }
 
-    fn render(&mut self, buf: &mut BufferView) {
-        self.deref_mut().render(buf)
+    fn render(&self, buf: &mut BufferView) {
+        self.deref().render(buf)
     }
 }
 

@@ -22,7 +22,7 @@ impl Label {
 }
 
 impl<Message> View<Message> for Label {
-    fn render(&mut self, buf: &mut crate::buffer::BufferView) {
+    fn render(&self, buf: &mut crate::buffer::BufferView) {
         let size = buf.size();
 
         if size.y == 0 {
