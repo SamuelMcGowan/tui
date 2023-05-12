@@ -1,33 +1,33 @@
 use std::io;
 use std::time::{Duration, Instant};
 
-use super::widget::{View, Widget};
+use super::component::{Component, View};
 use crate::buffer::Buffer;
 use crate::draw_buffer::draw_diff;
 use crate::platform::event::Events;
 use crate::platform::linux::LinuxTerminal;
 use crate::platform::{Terminal, Writer};
 
-pub struct App<W: Widget> {
-    root: W,
-    root_view: W::View,
+pub struct App<C: Component> {
+    root: C,
+    root_view: C::View,
 
     buf_old: Buffer,
     buf_new: Buffer,
 
     term: LinuxTerminal,
 
-    context: Context<W::Msg>,
-    messages_current: Vec<W::Msg>, // A buffer for messages currently being processed.
+    context: Context<C::Msg>,
+    messages_current: Vec<C::Msg>, // A buffer for messages currently being processed.
 
     refresh_rate: Duration,
 }
 
-impl<W: Widget> App<W> {
-    pub fn new(widget: W) -> io::Result<Self> {
+impl<C: Component> App<C> {
+    pub fn new(root: C) -> io::Result<Self> {
         Ok(Self {
-            root_view: widget.build(),
-            root: widget,
+            root_view: root.build(),
+            root,
 
             buf_old: Buffer::default(),
             buf_new: Buffer::default(),
@@ -80,7 +80,7 @@ impl<W: Widget> App<W> {
             .checked_add(self.refresh_rate)
             .expect("deadline overflowed");
 
-        // Update the widget tree.
+        // Update the component tree.
         self.root.update();
 
         // Handle events.
@@ -103,7 +103,7 @@ impl<W: Widget> App<W> {
         let term_size = self.term.size()?;
         self.buf_new.resize_and_clear(term_size);
 
-        // Render widget to buffer.
+        // Render component to buffer.
         let mut buf_view = self.buf_new.view(true);
         self.root_view.render(&mut buf_view);
 

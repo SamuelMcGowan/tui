@@ -73,8 +73,8 @@ impl<Msg> View<Msg> for Container<Msg> {
                     return;
                 }
 
-                let mut widget_buf_view = buf.view([1, 1], [w - 1, h - 1], true);
-                self.view.render(&mut widget_buf_view);
+                let mut inner_buf_view = buf.view([1, 1], [w - 1, h - 1], true);
+                self.view.render(&mut inner_buf_view);
 
                 for x in 1..(w - 1) {
                     buf[[x, 0]] = Some(Cell::new(kind.h(), style));

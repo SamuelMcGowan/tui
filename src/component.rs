@@ -30,7 +30,7 @@ impl<T: DerefMut<Target = V>, V: View<Msg> + ?Sized, Msg> View<Msg> for T {
     }
 }
 
-pub trait Widget: Sized {
+pub trait Component: Sized {
     type View: View<Self::Msg>;
     type Msg;
 

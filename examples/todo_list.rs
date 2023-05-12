@@ -23,7 +23,7 @@ struct Todo {
     done: bool,
 }
 
-impl Widget for TodoList {
+impl Component for TodoList {
     type View = Box<dyn View<Message>>;
     type Msg = Message;
 
@@ -63,7 +63,7 @@ impl Widget for TodoList {
     }
 }
 
-impl Widget for Todo {
+impl Component for Todo {
     type View = Label;
     type Msg = Message;
 

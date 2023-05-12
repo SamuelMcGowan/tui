@@ -7,7 +7,7 @@ fn main() {
 
 struct MyApp;
 
-impl Widget for MyApp {
+impl Component for MyApp {
     type View = Container<()>;
     type Msg = ();
 
