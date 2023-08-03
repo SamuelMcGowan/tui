@@ -78,13 +78,13 @@ impl TextEdit for StringEditor {
     }
 
     fn insert_str(&mut self, s: &str) {
-        let len_chars = s.as_bytes().len();
+        let len_chars = s.chars().count();
 
         self.s.insert_str(self.cursor_pos, s);
         self.len_chars += len_chars;
 
-        self.cursor_pos += len_chars;
-        self.cursor_pos_chars += s.chars().count();
+        self.cursor_pos += s.len();
+        self.cursor_pos_chars += len_chars;
     }
 
     fn delete_char(&mut self) {
